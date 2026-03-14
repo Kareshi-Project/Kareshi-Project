@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project>
+
+    <!-- Project Info -->
+    <meta title="Kareshi Project"
+          package="com.kareshiproject.game"
+          version="0.0.1"
+          company="Kareshi Project Team" />
+
+    <!-- Window -->
+    <window width="1280"
+            height="720"
+            fps="60"
+            background="#000000"
+            vsync="true" />
+
+    <!-- Source -->
+    <source path="source" />
+
+    <!-- Libraries -->
+    <haxelib name="openfl" />
+    <haxelib name="lime" />
+    <haxelib name="flixel" />
+    <haxelib name="flixel-ui" />
+    <haxelib name="flixel-addons" />
+
+    <!-- Assets -->
+    <assets path="assets/images" rename="images" />
+    <assets path="assets/sounds" rename="sounds" />
+    <assets path="assets/music" rename="music" />
+    <assets path="assets/data" rename="data" />
+
+    <!-- Windows Settings -->
+    <app main="Main" file="KareshiProject" path="export" />
+
+</project>
