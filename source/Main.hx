@@ -10,15 +10,7 @@ class Main extends Sprite
     {
         super();
 
-        addChild(new FlxGame(
-            1280, // width
-            720,  // height
-            PlayState,
-            1,    // zoom
-            60,   // updateFramerate (INT)
-            60,   // drawFramerate (INT)
-            true,
-            false
-        ));
+        var game = new FlxGame(1280, 720, PlayState);
+        addChild(game);
     }
 }
