@@ -12,7 +12,7 @@ class Main extends Sprite
 
         var gameWidth:Int = 1280;
         var gameHeight:Int = 720;
-        var initialState:Class<Dynamic> = PlayState;
+        var initialState = PlayState;
         var zoom:Float = -1;
         var framerate:Int = 60;
         var skipSplash:Bool = true;
