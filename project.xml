@@ -58,7 +58,7 @@
              versionCode="1"
              versionName="0.0.1"
              minSdkVersion="21"
-             targetSdkVersion="33"
+             targetSdkVersion="35"
              orientation="landscape"
              screenOrientation="landscape"
              appLabel="Kareshi Project"
@@ -71,7 +71,7 @@
              versionCode="1"
              versionName="0.0.1"
              minSdkVersion="21"
-             targetSdkVersion="33"
+             targetSdkVersion="35"
              orientation="landscape"
              screenOrientation="landscape"
              appLabel="Kareshi Project"
@@ -88,13 +88,13 @@
     <!-- Gradle versions compatíveis com NDK r21e -->
     <config:android gradle-version="7.4.2" gradle-plugin="7.3.1" if="android" />
 
-    <!-- Build tools + compile SDK explícito (evita conflito com android-35 do runner) -->
-    <config:android build-tools-version="33.0.2" if="android" />
-    <config:android compile-sdk-version="33"     if="android" />
+    <!-- Build tools + compile SDK alinhados com android-35 -->
+    <config:android build-tools-version="35.0.0" if="android" />
+    <config:android compile-sdk-version="35"     if="android" />
 
-    <!-- Força geração do APK final ao invés de só o projeto Gradle -->
-    <config:android assemble-release="true" unless="debug" />
+    <!-- Força geração do APK final -->
     <config:android assemble-debug="true"   if="debug" />
+    <config:android assemble-release="true" unless="debug" />
 
     <!-- ==================== iOS (future) ==================== -->
     <ios deployment="12" />
