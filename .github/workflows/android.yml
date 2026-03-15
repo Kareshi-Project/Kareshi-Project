@@ -42,13 +42,9 @@ jobs:
           haxelib install flixel-addons --quiet
           haxelib install extension-androidtools --quiet
 
-      - name: Install Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Fix Android SDK
+      - name: Install Android tools
         run: |
-          rm -rf $ANDROID_HOME/platforms/android-35
-          sdkmanager "platforms;android-35" "platforms;android-33" "build-tools;33.0.2" "ndk;21.4.7075529"
+          sdkmanager "platforms;android-33" "build-tools;33.0.2" "ndk;21.4.7075529"
 
       - name: Configure Lime for Android
         run: |
@@ -61,13 +57,6 @@ jobs:
         run: |
           haxelib run lime update android -debug
 
-      - name: Debug Gradle files
-        run: |
-          find export/android/bin -name "*.gradle" | while read f; do
-            echo "===== $f ====="
-            cat "$f"
-          done
-
       - name: Patch Gradle to use SDK 33
         run: |
           find export/android/bin -name "*.gradle" | while read f; do
@@ -78,11 +67,15 @@ jobs:
             sed -i 's/android-[0-9][0-9]*/android-33/g'                                   "$f"
           done
 
+      - name: Remove android-35
+        run: |
+          rm -rf $ANDROID_HOME/platforms/android-35
+
       - name: Assemble APK
         run: |
           cd export/android/bin
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
