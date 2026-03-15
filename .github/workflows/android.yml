@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup Haxe
@@ -18,13 +18,22 @@ jobs:
         with:
           haxe-version: 4.3.6
 
-      - name: Install Haxe libs
+      - name: Install Haxe Libraries
         run: |
+          haxelib install hxcpp
           haxelib install lime
           haxelib install openfl
           haxelib install flixel
           haxelib install flixel-ui
           haxelib install flixel-addons
+
+      - name: Setup hxcpp
+        run: |
+          haxelib run hxcpp setup
+
+      - name: Setup Lime
+        run: |
+          haxelib run lime setup
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v2
@@ -35,13 +44,15 @@ jobs:
           echo "ANDROID_NDK_ROOT=$(find $ANDROID_HOME/ndk -maxdepth 1 -type d | tail -n 1)" >> $GITHUB_ENV
 
       - name: Setup Lime Android
-        run: haxelib run lime setup android
+        run: |
+          haxelib run lime setup android
 
-      - name: Build APK
-        run: haxelib run lime build android -release
+      - name: Build Android APK
+        run: |
+          haxelib run lime build android -release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: kareshi-android
+          name: kareshi-android-build
           path: export/android/bin
