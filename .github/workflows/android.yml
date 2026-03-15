@@ -31,17 +31,17 @@ jobs:
       - name: Setup Lime
         run: haxelib run lime setup
 
-      - name: Setup Android SDK
+      - name: Setup Android SDK & NDK
         uses: android-actions/setup-android@v2
         with:
           api-level: 33
           build-tools: 33.0.2
           ndk: 25.2.9519653
 
-      - name: Set Android environment variables
+      - name: Set Android environment variables for Lime
         run: |
-          echo "ANDROID_SDK=/usr/local/android-sdk" >> $GITHUB_ENV
-          echo "ANDROID_NDK_ROOT=/usr/local/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
+          echo "ANDROID_SDK=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/25.2.9519653" >> $GITHUB_ENV
 
       - name: Setup Lime Android
         run: haxelib run lime setup android
