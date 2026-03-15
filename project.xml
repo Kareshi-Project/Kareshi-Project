@@ -48,15 +48,25 @@
     <assets path="assets/data"   rename="data" />
 
     <!-- ==================== Build Flags ==================== -->
-    <!-- Debug builds -->
     <haxeflag name="-debug" if="debug" />
     <define name="FLX_NO_FOCUS_LOST_SCREEN" if="debug" />
-
-    <!-- Disable unused Flixel features to reduce APK size -->
-    <define name="FLX_NO_MOUSE"   if="mobile" />
+    <define name="FLX_NO_MOUSE"    if="mobile" />
     <define name="FLX_NO_KEYBOARD" if="mobile" />
 
-    <!-- ==================== Android ==================== -->
+    <!-- ==================== Android Config ==================== -->
+    <android package="com.kareshiproject.game"
+             versionCode="1"
+             versionName="0.0.1"
+             minSdkVersion="21"
+             targetSdkVersion="33"
+             orientation="landscape"
+             screenOrientation="landscape"
+             appLabel="Kareshi Project"
+             apkFileName="KareshiProject-debug.apk"
+             allowBackup="false"
+             supportsRtl="false"
+             if="debug" />
+
     <android package="com.kareshiproject.game"
              versionCode="1"
              versionName="0.0.1"
@@ -67,10 +77,23 @@
              appLabel="Kareshi Project"
              apkFileName="KareshiProject-release.apk"
              allowBackup="false"
-             supportsRtl="false" />
+             supportsRtl="false"
+             unless="debug" />
 
     <!-- Android permissions -->
     <android permission="android.permission.VIBRATE" />
+    <android permission="android.permission.INTERNET" />
+    <android permission="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Gradle versions compatíveis com NDK r21e -->
+    <config:android gradle-version="7.4.2" gradle-plugin="7.3.1" if="android" />
+
+    <!-- Build tools -->
+    <config:android build-tools-version="33.0.2" if="android" />
+
+    <!-- Força geração do APK final ao invés de só o projeto Gradle -->
+    <config:android assemble-release="true" unless="debug" />
+    <config:android assemble-debug="true"   if="debug" />
 
     <!-- ==================== iOS (future) ==================== -->
     <ios deployment="12" />
