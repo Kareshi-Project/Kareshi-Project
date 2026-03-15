@@ -1,31 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project>
 
-    <!-- Project Info -->
+    <!-- ==================== Project Info ==================== -->
     <meta title="Kareshi Project"
           package="com.kareshiproject.game"
           version="0.0.1"
           company="Kareshi Project Team" />
 
-    <!-- Application -->
+    <!-- ==================== Application ==================== -->
     <app main="Main"
          file="KareshiProject"
          path="export" />
 
-    <!-- Window -->
+    <!-- ==================== Window ==================== -->
     <window width="1280"
             height="720"
             fps="60"
             background="#000000"
-            vsync="true" />
+            vsync="true"
+            resizable="false" />
 
-    <!-- Game Icon -->
+    <!-- Mobile: fullscreen + lock orientation -->
+    <window fullscreen="true" if="mobile" />
+    <window orientation="landscape" if="mobile" />
+
+    <!-- ==================== Icon ==================== -->
     <icon path="arts/icon.png" />
 
-    <!-- Source -->
+    <!-- ==================== Source ==================== -->
     <source path="source" />
 
-    <!-- Libraries -->
+    <!-- ==================== Libraries ==================== -->
     <haxelib name="hxcpp" />
     <haxelib name="lime" />
     <haxelib name="openfl" />
@@ -33,16 +38,25 @@
     <haxelib name="flixel-ui" />
     <haxelib name="flixel-addons" />
 
-    <!-- Android Tools Extension -->
+    <!-- Android-only extension -->
     <haxelib name="extension-androidtools" if="android" />
 
-    <!-- Assets -->
+    <!-- ==================== Assets ==================== -->
     <assets path="assets/images" rename="images" />
     <assets path="assets/sounds" rename="sounds" />
-    <assets path="assets/music" rename="music" />
-    <assets path="assets/data" rename="data" />
+    <assets path="assets/music"  rename="music" />
+    <assets path="assets/data"   rename="data" />
 
-    <!-- Android -->
+    <!-- ==================== Build Flags ==================== -->
+    <!-- Debug builds -->
+    <haxeflag name="-debug" if="debug" />
+    <define name="FLX_NO_FOCUS_LOST_SCREEN" if="debug" />
+
+    <!-- Disable unused Flixel features to reduce APK size -->
+    <define name="FLX_NO_MOUSE"   if="mobile" />
+    <define name="FLX_NO_KEYBOARD" if="mobile" />
+
+    <!-- ==================== Android ==================== -->
     <android package="com.kareshiproject.game"
              versionCode="1"
              versionName="0.0.1"
@@ -52,7 +66,13 @@
              screenOrientation="landscape"
              appLabel="Kareshi Project"
              apkFileName="KareshiProject-release.apk"
-             allowBackup="true"
-             supportsRtl="true" />
+             allowBackup="false"
+             supportsRtl="false" />
+
+    <!-- Android permissions -->
+    <android permission="android.permission.VIBRATE" />
+
+    <!-- ==================== iOS (future) ==================== -->
+    <ios deployment="12" />
 
 </project>
