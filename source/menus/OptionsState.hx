@@ -45,6 +45,8 @@ class OptionsState extends FlxState
     static final SWIPE_THRESHOLD:Float = 40;
     static final TAP_THRESHOLD:Float   = 10;
 
+    // ==================== Create ====================
+
     override public function create():Void
     {
         super.create();
@@ -137,13 +139,14 @@ class OptionsState extends FlxState
         }
     }
 
+    // ==================== Update ====================
+
     override public function update(elapsed:Float):Void
     {
         super.update(elapsed);
 
         if (!canInput) return;
 
-        // Cursor pisca
         cursor.alpha = 0.5 + Math.sin(haxe.Timer.stamp() * 6) * 0.5;
 
         #if desktop
@@ -177,9 +180,6 @@ class OptionsState extends FlxState
 
     function handleTouch():Void
     {
-        var touches = FlxG.touches.list;
-
-        // Início do toque
         for (touch in FlxG.touches.justStarted())
         {
             touchStartX = touch.screenX;
@@ -187,8 +187,7 @@ class OptionsState extends FlxState
             touchMoved  = false;
         }
 
-        // Movimento: deslize vertical muda seleção, horizontal muda valor
-        for (touch in touches)
+        for (touch in FlxG.touches.list)
         {
             var dx = touch.screenX - touchStartX;
             var dy = touch.screenY - touchStartY;
@@ -210,7 +209,6 @@ class OptionsState extends FlxState
             }
         }
 
-        // Toque rápido (tap): detecta item tocado ou confirma seleção
         for (touch in FlxG.touches.justReleased())
         {
             var dx = Math.abs(touch.screenX - touchStartX);
@@ -218,7 +216,6 @@ class OptionsState extends FlxState
 
             if (dx < TAP_THRESHOLD && dy < TAP_THRESHOLD)
             {
-                // Verifica se tocou em algum item
                 var tapped = false;
                 for (i in 0...optionTexts.length)
                 {
@@ -236,7 +233,6 @@ class OptionsState extends FlxState
                     }
                 }
 
-                // Tocou nas setas
                 if (!tapped)
                 {
                     if (arrowLeft[curSelected].overlapsPoint(touch.getWorldPosition()))
@@ -293,7 +289,6 @@ class OptionsState extends FlxState
             valueTexts[i].visible = i < OPTIONS.length - 1;
         }
 
-        // Posiciona cursor
         var sel = optionTexts[curSelected];
         cursor.x = sel.x - 20;
         cursor.y = sel.y + (sel.height - cursor.height) / 2;
@@ -339,3 +334,4 @@ class OptionsState extends FlxState
             });
         }
     }
+}
