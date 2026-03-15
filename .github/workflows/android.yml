@@ -44,7 +44,7 @@ jobs:
           haxelib install flixel --quiet
           haxelib install flixel-ui --quiet
           haxelib install flixel-addons --quiet
-          haxelib git extension-androidtools https://github.com/openfl/extension-androidtools
+          haxelib install extension-androidtools --quiet
 
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
