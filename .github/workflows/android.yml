@@ -51,7 +51,6 @@ jobs:
 
       - name: Install Android Build Tools
         run: |
-          sdkmanager --uninstall "platforms;android-35" || true
           sdkmanager "platforms;android-33" "build-tools;33.0.2"
 
       - name: Install NDK r21e
@@ -65,9 +64,20 @@ jobs:
           haxelib run lime config JAVA_HOME $JAVA_HOME
           haxelib run lime config ANDROID_SETUP true
 
-      - name: Build APK
+      - name: Generate Gradle project
         run: |
-          haxelib run lime build android -debug
+          haxelib run lime build android -debug --no-build
+
+      - name: Patch Gradle to use SDK 33
+        run: |
+          find export/android/bin -name "*.gradle" | xargs sed -i \
+            's/compileSdkVersion [0-9]*/compileSdkVersion 33/g; s/targetSdkVersion [0-9]*/targetSdkVersion 33/g; s/android-[0-9]*/android-33/g'
+
+      - name: Assemble APK
+        run: |
+          cd export/android/bin
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
       - name: Find APK
         run: |
