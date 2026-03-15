@@ -62,8 +62,13 @@ jobs:
 
       - name: Patch Gradle to use SDK 33
         run: |
-          find export/android/bin -name "*.gradle" | xargs sed -i \
-            's/compileSdkVersion [0-9]*/compileSdkVersion 33/g; s/targetSdkVersion [0-9]*/targetSdkVersion 33/g; s/android-[0-9]*/android-33/g'
+          find export/android/bin -name "*.gradle" | while read f; do
+            sed -i 's/compileSdkVersion Integer.parseInt("[0-9]*")/compileSdkVersion 33/g' "$f"
+            sed -i 's/targetSdkVersion Integer.parseInt("[0-9]*")/targetSdkVersion 33/g'   "$f"
+            sed -i 's/compileSdkVersion [0-9][0-9]*/compileSdkVersion 33/g'               "$f"
+            sed -i 's/targetSdkVersion [0-9][0-9]*/targetSdkVersion 33/g'                 "$f"
+            sed -i 's/android-[0-9][0-9]*/android-33/g'                                   "$f"
+          done
 
       - name: Assemble APK
         run: |
