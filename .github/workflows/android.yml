@@ -3,17 +3,14 @@ name: Android Build
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  android-build:
-    name: Build Android
+  build-android:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Haxe
@@ -21,7 +18,7 @@ jobs:
         with:
           haxe-version: 4.3.6
 
-      - name: Install Haxe libraries
+      - name: Install Haxe libs
         run: |
           haxelib install lime
           haxelib install openfl
@@ -29,29 +26,22 @@ jobs:
           haxelib install flixel-ui
           haxelib install flixel-addons
 
-      - name: Setup Lime
-        run: haxelib run lime setup
-
-      - name: Setup Android SDK & NDK
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v2
-        with:
-          api-level: 33
-          build-tools: 33.0.2
-          ndk: 25.2.9519653
 
-      - name: Set Android environment variables for Lime
+      - name: Detect Android SDK & NDK
         run: |
           echo "ANDROID_SDK=$ANDROID_HOME" >> $GITHUB_ENV
-          echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/25.2.9519653" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$(find $ANDROID_HOME/ndk -maxdepth 1 -type d | tail -n 1)" >> $GITHUB_ENV
 
       - name: Setup Lime Android
         run: haxelib run lime setup android
 
-      - name: Build Android APK
+      - name: Build APK
         run: haxelib run lime build android -release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: kareshi-android-apk
-          path: export/android/bin/KareshiProject-release.apk
+          name: kareshi-android
+          path: export/android/bin
