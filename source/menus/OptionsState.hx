@@ -160,6 +160,7 @@ class OptionsState extends FlxState
 
     // ==================== Keyboard ====================
 
+    #if desktop
     function handleKeyboard():Void
     {
         if (FlxG.keys.justPressed.UP)
@@ -175,6 +176,7 @@ class OptionsState extends FlxState
         else if (FlxG.keys.justPressed.ESCAPE || FlxG.keys.justPressed.X)
             goBack();
     }
+    #end
 
     // ==================== Touch ====================
 
