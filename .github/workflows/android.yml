@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -35,12 +38,12 @@ jobs:
 
       - name: Install Haxe libraries
         run: |
-          haxelib install hxcpp
-          haxelib install lime
-          haxelib install openfl
-          haxelib install flixel
-          haxelib install flixel-ui
-          haxelib install flixel-addons
+          haxelib install hxcpp --quiet
+          haxelib install lime --quiet
+          haxelib install openfl --quiet
+          haxelib install flixel --quiet
+          haxelib install flixel-ui --quiet
+          haxelib install flixel-addons --quiet
           haxelib git extension-androidtools https://github.com/openfl/extension-androidtools
 
       - name: Install Android SDK
@@ -50,23 +53,13 @@ jobs:
         run: |
           sdkmanager "ndk;23.1.7779620"
 
-      - name: Configure Android paths
+      - name: Configure Android paths for Lime
         run: |
-          echo "ANDROID_SDK=$ANDROID_HOME" >> $GITHUB_ENV
-          echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/23.1.7779620" >> $GITHUB_ENV
-
-      - name: Lime setup
-        run: |
-          haxelib run lime setup
-
-      - name: Lime setup android
-        run: |
-          haxelib run lime setup android
+          haxelib run lime config ANDROID_SDK $ANDROID_HOME
+          haxelib run lime config ANDROID_NDK_ROOT $ANDROID_HOME/ndk/23.1.7779620
+          haxelib run lime config JAVA_HOME $JAVA_HOME
 
       - name: Build APK
-        env:
-          ANDROID_SDK: ${{ env.ANDROID_SDK }}
-          ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK_ROOT }}
         run: |
           haxelib run lime build android -release
 
