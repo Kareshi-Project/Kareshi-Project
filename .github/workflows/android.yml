@@ -49,13 +49,14 @@ jobs:
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install Android Build Tools
+        run: |
+          sdkmanager --uninstall "platforms;android-35" || true
+          sdkmanager "platforms;android-33" "build-tools;33.0.2"
+
       - name: Install NDK r21e
         run: |
           sdkmanager "ndk;21.4.7075529"
-
-      - name: Install Android Build Tools
-        run: |
-          sdkmanager "build-tools;33.0.2" "platforms;android-33"
 
       - name: Configure Android paths for Lime
         run: |
