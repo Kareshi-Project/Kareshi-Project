@@ -9,6 +9,7 @@ import flixel.util.FlxColor;
 import flixel.util.FlxTimer;
 import flixel.group.FlxGroup;
 import flixel.tweens.FlxTween;
+import flixel.tweens.FlxTweenType;
 import flixel.tweens.FlxEase;
 import flixel.math.FlxAngle;
 import backend.Controls;
@@ -17,9 +18,9 @@ import backend.Controls.Action;
 // ==================== Bullet ====================
 class Bullet extends FlxSprite
 {
-    public var speed:Float   = 300;
+    public var speed:Float     = 300;
     public var moveAngle:Float = 0;
-    public var isPlayer:Bool = false;
+    public var isPlayer:Bool   = false;
 
     public function new()
     {
@@ -63,7 +64,7 @@ class BulletPool extends FlxGroup
 
     public function fire(x:Float, y:Float, fireAngle:Float, spd:Float, col:FlxColor, fromPlayer:Bool = false):Bullet
     {
-        var b:Bullet = cast getFirstDead(false);
+        var b:Bullet = cast getFirstDead();
         if (b != null)
             b.fire(x, y, fireAngle, spd, col, fromPlayer);
         return b;
@@ -103,7 +104,7 @@ class Player extends FlxSprite
         alpha      = 0.4;
 
         FlxTween.tween(this, {alpha: 1}, 0.15, {
-            type: FlxTween.PINGPONG,
+            type: FlxTweenType.PINGPONG,
             onComplete: function(t)
             {
                 if (t.executions >= 10)
@@ -159,6 +160,8 @@ class PlayState extends FlxState
     static final PLAY_W:Float = 800;
     static inline function playH():Float return FlxG.height - 32;
 
+    // ==================== Create ====================
+
     override public function create():Void
     {
         super.create();
@@ -171,8 +174,6 @@ class PlayState extends FlxState
         createBoss();
         createUI();
     }
-
-    // ==================== Setup ====================
 
     function createBackground():Void
     {
@@ -217,9 +218,8 @@ class PlayState extends FlxState
 
     function createBoss():Void
     {
-        boss = new FlxSprite(PLAY_X + PLAY_W / 2 - 20, PLAY_Y + 80);
+        boss = new FlxSprite(PLAY_X + PLAY_W / 2 - 20, -60);
         boss.makeGraphic(40, 40, FlxColor.RED);
-        boss.y = -60;
         add(boss);
 
         FlxTween.tween(boss, {y: PLAY_Y + 80}, 1.5, {
@@ -371,7 +371,8 @@ class PlayState extends FlxState
     function handleBoss(elapsed:Float):Void
     {
         bossSwingAngle += elapsed * 60;
-        boss.x = PLAY_X + PLAY_W / 2 - boss.width / 2 + Math.sin(bossSwingAngle * Math.PI / 180) * 180;
+        boss.x = PLAY_X + PLAY_W / 2 - boss.width / 2
+            + Math.sin(bossSwingAngle * Math.PI / 180) * 180;
 
         bossPatternTimer += elapsed;
         if (bossPatternTimer >= 8)
