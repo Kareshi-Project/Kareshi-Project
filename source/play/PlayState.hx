@@ -8,10 +8,8 @@ import flixel.text.FlxText;
 import flixel.util.FlxColor;
 import flixel.util.FlxTimer;
 import flixel.group.FlxGroup;
-import flixel.group.FlxTypedGroup;
 import flixel.tweens.FlxTween;
 import flixel.tweens.FlxEase;
-import flixel.math.FlxPoint;
 import flixel.math.FlxAngle;
 import backend.Controls;
 import backend.Controls.Action;
@@ -19,9 +17,8 @@ import backend.Controls.Action;
 // ==================== Bullet ====================
 class Bullet extends FlxSprite
 {
-    public var active(default, null):Bool = true;
-    public var speed:Float  = 300;
-    public var angle:Float  = 0;
+    public var speed:Float   = 300;
+    public var moveAngle:Float = 0;
     public var isPlayer:Bool = false;
 
     public function new()
@@ -31,16 +28,16 @@ class Bullet extends FlxSprite
         exists = false;
     }
 
-    public function fire(x:Float, y:Float, angle:Float, speed:Float, color:FlxColor, isPlayer:Bool = false):Void
+    public function fire(x:Float, y:Float, fireAngle:Float, spd:Float, col:FlxColor, fromPlayer:Bool = false):Void
     {
-        this.isPlayer = isPlayer;
-        this.speed    = speed;
-        this.angle    = angle;
-        this.color    = color;
+        isPlayer  = fromPlayer;
+        speed     = spd;
+        moveAngle = fireAngle;
+        color     = col;
         setPosition(x - width / 2, y - height / 2);
         velocity.set(
-            Math.cos(angle * Math.PI / 180) * speed,
-            Math.sin(angle * Math.PI / 180) * speed
+            Math.cos(fireAngle * Math.PI / 180) * spd,
+            Math.sin(fireAngle * Math.PI / 180) * spd
         );
         exists = true;
         alive  = true;
@@ -55,7 +52,7 @@ class Bullet extends FlxSprite
 }
 
 // ==================== BulletPool ====================
-class BulletPool extends FlxTypedGroup<Bullet>
+class BulletPool extends FlxGroup
 {
     public function new(size:Int)
     {
@@ -64,11 +61,11 @@ class BulletPool extends FlxTypedGroup<Bullet>
             add(new Bullet());
     }
 
-    public function fire(x:Float, y:Float, angle:Float, speed:Float, color:FlxColor, isPlayer:Bool = false):Bullet
+    public function fire(x:Float, y:Float, fireAngle:Float, spd:Float, col:FlxColor, fromPlayer:Bool = false):Bullet
     {
-        var b = getFirstDead(false);
+        var b:Bullet = cast getFirstDead(false);
         if (b != null)
-            b.fire(x, y, angle, speed, color, isPlayer);
+            b.fire(x, y, fireAngle, spd, col, fromPlayer);
         return b;
     }
 }
@@ -76,26 +73,25 @@ class BulletPool extends FlxTypedGroup<Bullet>
 // ==================== Player ====================
 class Player extends FlxSprite
 {
-    public var speed:Float         = 200;
+    public var moveSpeed:Float     = 200;
     public var focusSpeed:Float    = 90;
     public var lives:Int           = 3;
     public var bombs:Int           = 3;
     public var invincible:Bool     = false;
     public var shootCooldown:Float = 0;
-    public var hitbox:FlxSprite;
+    public var hitboxSprite:FlxSprite;
 
     public function new(x:Float, y:Float)
     {
         super(x, y);
         makeGraphic(24, 32, FlxColor.CYAN);
 
-        // Hitbox pequeno (estilo Touhou)
         setSize(6, 6);
         centerOffsets();
 
-        hitbox = new FlxSprite();
-        hitbox.makeGraphic(6, 6, FlxColor.WHITE);
-        hitbox.exists = false;
+        hitboxSprite = new FlxSprite();
+        hitboxSprite.makeGraphic(6, 6, FlxColor.WHITE);
+        hitboxSprite.exists = false;
     }
 
     public function takeDamage():Bool
@@ -104,7 +100,7 @@ class Player extends FlxSprite
 
         lives--;
         invincible = true;
-        alpha = 0.4;
+        alpha      = 0.4;
 
         FlxTween.tween(this, {alpha: 1}, 0.15, {
             type: FlxTween.PINGPONG,
@@ -126,55 +122,48 @@ class Player extends FlxSprite
 // ==================== PlayState ====================
 class PlayState extends FlxState
 {
-    // Player
     var player:Player;
     var playerBullets:BulletPool;
-
-    // Enemy
     var enemyBullets:BulletPool;
+
     var boss:FlxSprite;
-    var bossHP:Float        = 100;
-    var bossHPMax:Float     = 100;
-    var bossAngle:Float     = 0;
+    var bossHP:Float           = 100;
+    var bossHPMax:Float        = 100;
+    var bossSwingAngle:Float   = 0;
     var bossPatternTimer:Float = 0;
-    var bossPattern:Int     = 0;
-    var bossFireTimer:Float = 0;
-    var bossWaveAngle:Float = 0;
+    var bossPattern:Int        = 0;
+    var bossFireTimer:Float    = 0;
+    var bossWaveAngle:Float    = 0;
 
-    // Background
-    var bgLayers:Array<FlxSprite>  = [];
     var starLayers:Array<Array<FlxSprite>> = [];
-    var bgScrollSpeeds:Array<Float> = [20, 40, 70];
+    var bgScrollSpeeds:Array<Float>        = [20, 40, 70];
 
-    // UI
     var scoreText:FlxText;
     var livesText:FlxText;
     var bombsText:FlxText;
     var bossHPBar:FlxSprite;
     var bossHPBarBG:FlxSprite;
     var focusHint:FlxText;
-
-    var score:Int          = 0;
-    var graze:Int          = 0;
-    var grazeTimer:Float   = 0;
     var grazeText:FlxText;
 
-    var controls:Controls;
-    var gameOver:Bool      = false;
-    var paused:Bool        = false;
+    var score:Int        = 0;
+    var graze:Int        = 0;
+    var grazeTimer:Float = 0;
 
-    // Área de jogo
-    static final PLAY_X:Float  = 32;
-    static final PLAY_Y:Float  = 16;
-    static final PLAY_W:Float  = 800;
-    static final PLAY_H:Float  = FlxG.height - 32;
+    var controls:Controls;
+    var gameOver:Bool = false;
+    var paused:Bool   = false;
+
+    static final PLAY_X:Float = 32;
+    static final PLAY_Y:Float = 16;
+    static final PLAY_W:Float = 800;
+    static inline function playH():Float return FlxG.height - 32;
 
     override public function create():Void
     {
         super.create();
 
         controls = Controls.instance;
-
         FlxG.camera.bgColor = FlxColor.fromRGB(5, 5, 15);
 
         createBackground();
@@ -187,12 +176,11 @@ class PlayState extends FlxState
 
     function createBackground():Void
     {
-        // Camadas de estrelas em parallax
         for (layer in 0...3)
         {
             var stars:Array<FlxSprite> = [];
-            var count = [80, 50, 30][layer];
-            var sizes = [1, 2, 3][layer];
+            var count  = [80, 50, 30][layer];
+            var size   = [1,  2,  3 ][layer];
             var colors = [
                 FlxColor.fromRGBFloat(0.3, 0.3, 0.5),
                 FlxColor.fromRGBFloat(0.5, 0.5, 0.7),
@@ -205,28 +193,19 @@ class PlayState extends FlxState
                     PLAY_X + FlxG.random.float(0, PLAY_W),
                     FlxG.random.float(0, FlxG.height)
                 );
-                star.makeGraphic(sizes, sizes, colors[layer]);
+                star.makeGraphic(size, size, colors[layer]);
                 star.alpha = FlxG.random.float(0.4, 1.0);
                 add(star);
                 stars.push(star);
             }
-
             starLayers.push(stars);
         }
-
-        // Borda da área de jogo
-        var border = new FlxSprite(PLAY_X, PLAY_Y).makeGraphic(
-            Std.int(PLAY_W), Std.int(PLAY_H),
-            FlxColor.fromRGBFloat(0, 0, 0, 0)
-        );
-        border.color   = FlxColor.fromRGBFloat(0.2, 0.2, 0.4);
-        add(border);
     }
 
     function createPlayer():Void
     {
-        player = new Player(PLAY_X + PLAY_W / 2, PLAY_Y + PLAY_H - 80);
-        add(player.hitbox);
+        player = new Player(PLAY_X + PLAY_W / 2, PLAY_Y + playH() - 80);
+        add(player.hitboxSprite);
         add(player);
 
         playerBullets = new BulletPool(200);
@@ -251,7 +230,6 @@ class PlayState extends FlxState
 
     function createUI():Void
     {
-        // Painel lateral
         var panel = new FlxSprite(PLAY_X + PLAY_W, 0).makeGraphic(
             Std.int(FlxG.width - PLAY_W - PLAY_X), FlxG.height,
             FlxColor.fromRGB(8, 8, 18)
@@ -276,20 +254,17 @@ class PlayState extends FlxState
         bombsText.setFormat(null, 18, FlxColor.fromRGB(80, 180, 255), "left");
         add(bombsText);
 
-        // Barra de HP do boss
         bossHPBarBG = new FlxSprite(PLAY_X, PLAY_Y - 12).makeGraphic(Std.int(PLAY_W), 6, FlxColor.fromRGB(40, 40, 40));
         add(bossHPBarBG);
 
         bossHPBar = new FlxSprite(PLAY_X, PLAY_Y - 12).makeGraphic(Std.int(PLAY_W), 6, FlxColor.fromRGB(220, 60, 60));
         add(bossHPBar);
 
-        // Graze
         grazeText = new FlxText(uiX, 270, 200, "");
         grazeText.setFormat(null, 14, FlxColor.YELLOW, "left");
         grazeText.alpha = 0;
         add(grazeText);
 
-        // Focus hint
         focusHint = new FlxText(0, FlxG.height - 24, FlxG.width, "");
         focusHint.setFormat(null, 14, FlxColor.fromRGBFloat(1, 1, 1, 0.5), "center");
         add(focusHint);
@@ -346,22 +321,20 @@ class PlayState extends FlxState
     function handlePlayerMovement(elapsed:Float):Void
     {
         var isFocused = controls.pressed(Action.FOCUS);
-        var spd       = isFocused ? player.focusSpeed : player.speed;
+        var spd       = isFocused ? player.focusSpeed : player.moveSpeed;
         var move      = controls.getMovement();
 
         player.velocity.set(move.x * spd, move.y * spd);
 
-        // Limita dentro da área de jogo
         player.x = Math.max(PLAY_X, Math.min(PLAY_X + PLAY_W - player.width,  player.x));
-        player.y = Math.max(PLAY_Y, Math.min(PLAY_Y + PLAY_H - player.height, player.y));
+        player.y = Math.max(PLAY_Y, Math.min(PLAY_Y + playH() - player.height, player.y));
 
-        // Hitbox visível só no focus
-        player.hitbox.visible = isFocused;
+        player.hitboxSprite.visible = isFocused;
         if (isFocused)
         {
-            player.hitbox.exists = true;
-            player.hitbox.x = player.x + (player.width  - player.hitbox.width)  / 2;
-            player.hitbox.y = player.y + (player.height - player.hitbox.height) / 2;
+            player.hitboxSprite.exists = true;
+            player.hitboxSprite.x = player.x + (player.width  - player.hitboxSprite.width)  / 2;
+            player.hitboxSprite.y = player.y + (player.height - player.hitboxSprite.height) / 2;
         }
     }
 
@@ -374,23 +347,21 @@ class PlayState extends FlxState
             var isFocused = controls.pressed(Action.FOCUS);
             player.shootCooldown = isFocused ? 0.07 : 0.10;
 
-            var bx = player.x + player.width / 2;
+            var bx = player.x + player.width  / 2;
             var by = player.y;
 
             if (isFocused)
             {
-                // Tiro concentrado: 2 balas centrais
                 playerBullets.fire(bx - 3, by, -90, 600, FlxColor.fromRGB(200, 255, 255), true);
                 playerBullets.fire(bx + 3, by, -90, 600, FlxColor.fromRGB(200, 255, 255), true);
             }
             else
             {
-                // Tiro espalhado: 5 balas
-                playerBullets.fire(bx,      by, -90,  550, FlxColor.CYAN,  true);
-                playerBullets.fire(bx - 12, by, -92,  530, FlxColor.CYAN,  true);
-                playerBullets.fire(bx + 12, by, -88,  530, FlxColor.CYAN,  true);
-                playerBullets.fire(bx - 24, by, -96,  500, FlxColor.WHITE, true);
-                playerBullets.fire(bx + 24, by, -84,  500, FlxColor.WHITE, true);
+                playerBullets.fire(bx,      by, -90, 550, FlxColor.CYAN,  true);
+                playerBullets.fire(bx - 12, by, -92, 530, FlxColor.CYAN,  true);
+                playerBullets.fire(bx + 12, by, -88, 530, FlxColor.CYAN,  true);
+                playerBullets.fire(bx - 24, by, -96, 500, FlxColor.WHITE, true);
+                playerBullets.fire(bx + 24, by, -84, 500, FlxColor.WHITE, true);
             }
         }
     }
@@ -399,22 +370,19 @@ class PlayState extends FlxState
 
     function handleBoss(elapsed:Float):Void
     {
-        // Movimento senoidal
-        bossAngle += elapsed * 60;
-        boss.x = PLAY_X + PLAY_W / 2 - boss.width / 2 + Math.sin(bossAngle * Math.PI / 180) * 180;
+        bossSwingAngle += elapsed * 60;
+        boss.x = PLAY_X + PLAY_W / 2 - boss.width / 2 + Math.sin(bossSwingAngle * Math.PI / 180) * 180;
 
-        // Troca de padrão
         bossPatternTimer += elapsed;
         if (bossPatternTimer >= 8)
         {
             bossPatternTimer = 0;
-            bossPattern = (bossPattern + 1) % 4;
-            bossWaveAngle = 0;
+            bossPattern      = (bossPattern + 1) % 4;
+            bossWaveAngle    = 0;
         }
 
-        // Disparo
         bossFireTimer += elapsed;
-        var fireRate = 0.08 - (1 - bossHP / bossHPMax) * 0.04;
+        var fireRate:Float = 0.08 - (1 - bossHP / bossHPMax) * 0.04;
 
         if (bossFireTimer >= fireRate)
         {
@@ -430,7 +398,6 @@ class PlayState extends FlxState
 
         switch (bossPattern)
         {
-            // Padrão 0: círculo expandindo
             case 0:
                 var count = 16;
                 for (i in 0...count)
@@ -440,7 +407,6 @@ class PlayState extends FlxState
                 }
                 bossWaveAngle += 5;
 
-            // Padrão 1: espiral dupla
             case 1:
                 for (k in 0...2)
                 {
@@ -451,7 +417,6 @@ class PlayState extends FlxState
                 }
                 bossWaveAngle += 8;
 
-            // Padrão 2: leque apontado ao player
             case 2:
                 var toPlayer = FlxAngle.angleBetween(boss, player, true);
                 var spread   = 40;
@@ -462,7 +427,6 @@ class PlayState extends FlxState
                     enemyBullets.fire(cx, cy, a, 200, FlxColor.fromRGB(180, 100, 255));
                 }
 
-            // Padrão 3: anel denso lento
             case 3:
                 var count = 24;
                 for (i in 0...count)
@@ -478,22 +442,20 @@ class PlayState extends FlxState
 
     function handleCollisions():Void
     {
-        // Balas do player no boss
-        FlxG.overlap(playerBullets, boss, function(bullet:Bullet, _)
+        FlxG.overlap(playerBullets, boss, function(b:FlxObject, _)
         {
+            var bullet:Bullet = cast b;
             bullet.kill();
             bossHP -= 1;
             score  += 10;
-
-            if (bossHP <= 0)
-                triggerBossDeath();
+            if (bossHP <= 0) triggerBossDeath();
         });
 
-        // Balas do inimigo no player
         if (!player.invincible)
         {
-            FlxG.overlap(enemyBullets, player, function(bullet:Bullet, _)
+            FlxG.overlap(enemyBullets, player, function(b:FlxObject, _)
             {
+                var bullet:Bullet = cast b;
                 bullet.kill();
                 var dead = player.takeDamage();
                 if (dead) triggerGameOver();
@@ -507,13 +469,13 @@ class PlayState extends FlxState
     {
         grazeTimer -= elapsed;
 
-        // Graze: balas perto do hitbox mas sem acertar
-        for (bullet in enemyBullets.members)
+        for (basic in enemyBullets.members)
         {
-            if (!bullet.exists || !bullet.alive) continue;
+            var bullet:Bullet = cast basic;
+            if (bullet == null || !bullet.exists || !bullet.alive) continue;
 
-            var dx = (bullet.x + bullet.width  / 2) - (player.x + player.width  / 2);
-            var dy = (bullet.y + bullet.height / 2) - (player.y + player.height / 2);
+            var dx   = (bullet.x + bullet.width  / 2) - (player.x + player.width  / 2);
+            var dy   = (bullet.y + bullet.height / 2) - (player.y + player.height / 2);
             var dist = Math.sqrt(dx * dx + dy * dy);
 
             if (dist < 28 && dist > 6)
@@ -523,8 +485,8 @@ class PlayState extends FlxState
 
                 if (grazeTimer <= 0)
                 {
-                    grazeTimer = 0.5;
-                    grazeText.text = "Graze! +" + graze;
+                    grazeTimer      = 0.5;
+                    grazeText.text  = "Graze! +" + graze;
                     grazeText.alpha = 1;
                     FlxTween.tween(grazeText, {alpha: 0}, 0.5, {ease: FlxEase.quartIn});
                 }
@@ -546,7 +508,6 @@ class PlayState extends FlxState
         for (_ in 0...player.bombs) bombsStr += "✦ ";
         bombsText.text = "Bombs\n" + (bombsStr == "" ? "—" : bombsStr);
 
-        // HP bar do boss
         var ratio = Math.max(0, bossHP / bossHPMax);
         bossHPBar.scale.x = ratio;
         bossHPBar.x       = PLAY_X;
@@ -557,7 +518,7 @@ class PlayState extends FlxState
     function triggerBossDeath():Void
     {
         boss.exists = false;
-        score += 10000;
+        score      += 10000;
 
         var clear = new FlxText(0, FlxG.height / 2 - 30, FlxG.width, "Stage Clear!");
         clear.setFormat(null, 48, FlxColor.YELLOW, "center");
