@@ -9,54 +9,39 @@ import openfl.system.System;
 
 class DebugDisplay extends FlxGroup
 {
-    // Textos
     var fpsText:FlxText;
     var memText:FlxText;
     var resText:FlxText;
     var stateText:FlxText;
     var bg:FlxSprite;
 
-    // FPS tracking
     var fpsBuffer:Array<Float> = [];
     var fpsTimer:Float         = 0;
-    static final FPS_SAMPLE:Int   = 30;
+    static final FPS_SAMPLE:Int    = 30;
     static final UPDATE_RATE:Float = 0.1;
 
-    // Visibilidade
-    public var visible(default, set):Bool = true;
-
-    // Cor base
-    static final COLOR_GOOD:FlxColor    = FlxColor.fromRGB(100, 255, 120);
-    static final COLOR_MEDIUM:FlxColor  = FlxColor.fromRGB(255, 220, 60);
-    static final COLOR_BAD:FlxColor     = FlxColor.fromRGB(255, 80,  80);
-    static final COLOR_LABEL:FlxColor   = FlxColor.fromRGBFloat(0.6, 0.6, 0.8);
+    static final COLOR_GOOD:FlxColor   = FlxColor.fromRGB(100, 255, 120);
+    static final COLOR_MEDIUM:FlxColor = FlxColor.fromRGB(255, 220, 60);
+    static final COLOR_BAD:FlxColor    = FlxColor.fromRGB(255, 80,  80);
+    static final COLOR_LABEL:FlxColor  = FlxColor.fromRGBFloat(0.6, 0.6, 0.8);
 
     public function new(x:Float = 4, y:Float = 4)
     {
         super();
 
-        // Fundo semitransparente
         bg = new FlxSprite(x, y).makeGraphic(180, 80, FlxColor.fromRGBFloat(0, 0, 0, 0.55));
         bg.scrollFactor.set(0, 0);
         add(bg);
 
-        // FPS
-        fpsText = makeText(x + 6, y + 4, "FPS: --");
-        add(fpsText);
-
-        // Memória
-        memText = makeText(x + 6, y + 20, "MEM: --");
-        add(memText);
-
-        // Resolução
-        resText = makeText(x + 6, y + 36, "RES: --");
-        add(resText);
-
-        // State atual
+        fpsText   = makeText(x + 6, y + 4,  "FPS: --");
+        memText   = makeText(x + 6, y + 20, "MEM: --");
+        resText   = makeText(x + 6, y + 36, "RES: --");
         stateText = makeText(x + 6, y + 52, "STATE: --");
-        add(stateText);
 
-        setScrollFactor(0, 0);
+        add(fpsText);
+        add(memText);
+        add(resText);
+        add(stateText);
     }
 
     function makeText(x:Float, y:Float, str:String):FlxText
@@ -74,7 +59,6 @@ class DebugDisplay extends FlxGroup
 
         if (!visible) return;
 
-        // Coleta amostras de FPS
         fpsBuffer.push(1 / elapsed);
         if (fpsBuffer.length > FPS_SAMPLE)
             fpsBuffer.shift();
@@ -89,7 +73,6 @@ class DebugDisplay extends FlxGroup
 
     function refresh():Void
     {
-        // FPS médio
         var sum:Float = 0;
         for (f in fpsBuffer) sum += f;
         var fps = Math.round(sum / fpsBuffer.length);
@@ -97,16 +80,13 @@ class DebugDisplay extends FlxGroup
         fpsText.text  = "FPS: " + fps + " / " + FlxG.drawFramerate;
         fpsText.color = fpsColor(fps);
 
-        // Memória (MB)
         var mem = Math.round(System.totalMemory / 1024 / 1024 * 10) / 10;
         memText.text  = "MEM: " + mem + " MB";
         memText.color = memColor(mem);
 
-        // Resolução
         resText.text  = "RES: " + FlxG.width + "x" + FlxG.height;
         resText.color = COLOR_LABEL;
 
-        // State atual
         var stateName = Type.getClassName(Type.getClass(FlxG.state));
         var parts     = stateName.split(".");
         stateText.text  = "STATE: " + parts[parts.length - 1];
@@ -122,8 +102,8 @@ class DebugDisplay extends FlxGroup
 
     function memColor(mb:Float):FlxColor
     {
-        if (mb < 100)  return COLOR_GOOD;
-        if (mb < 200)  return COLOR_MEDIUM;
+        if (mb < 100) return COLOR_GOOD;
+        if (mb < 200) return COLOR_MEDIUM;
         return COLOR_BAD;
     }
 
@@ -134,17 +114,16 @@ class DebugDisplay extends FlxGroup
         visible = !visible;
     }
 
-    function set_visible(v:Bool):Bool
+    override function set_visible(v:Bool):Bool
     {
-        visible = v;
+        super.set_visible(v);
         for (member in members)
             if (member != null) member.visible = v;
         return v;
     }
 
-    // ==================== Helpers ====================
+    // ==================== Static Helper ====================
 
-    /** Adiciona o DebugDisplay ao state atual e retorna a instância */
     public static function attach():DebugDisplay
     {
         var dd = new DebugDisplay();
