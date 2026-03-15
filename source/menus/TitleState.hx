@@ -75,7 +75,7 @@ class TitleState extends FlxState
         FlxTween.tween(bg, {alpha: 0}, 0.6, {ease: FlxEase.quartIn});
         FlxTween.tween(pressStartText, {alpha: 0}, 0.6, {
             ease: FlxEase.quartIn,
-            onComplete: function(_) FlxG.switchState(new menus.MainMenuState())
+            onComplete: function(_) FlxG.switchState(new menus.MainMenu())
         });
     }
 }
