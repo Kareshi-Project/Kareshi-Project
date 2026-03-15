@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Haxe
@@ -20,15 +20,10 @@ jobs:
 
       - name: Setup Haxelib
         run: |
+          mkdir ~/haxelib
           haxelib setup ~/haxelib
 
-      - name: Cache Haxelib
-        uses: actions/cache@v4
-        with:
-          path: ~/haxelib
-          key: ${{ runner.os }}-haxelib
-
-      - name: Install Libraries
+      - name: Install Haxe Libraries
         run: |
           haxelib install hxcpp
           haxelib install lime
@@ -44,20 +39,23 @@ jobs:
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android NDK
+      - name: Install NDK
         run: |
           sdkmanager "ndk;25.2.9519653"
 
-      - name: Set Android Environment
+      - name: Configure Android Paths
         run: |
-          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "ANDROID_SDK=$ANDROID_HOME" >> $GITHUB_ENV
           echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/25.2.9519653" >> $GITHUB_ENV
 
       - name: Setup Lime Android
         run: |
           haxelib run lime setup android
 
-      - name: Build Android APK
+      - name: Build APK
+        env:
+          ANDROID_SDK: ${{ env.ANDROID_SDK }}
+          ANDROID_NDK_ROOT: ${{ env.ANDROID_NDK_ROOT }}
         run: |
           haxelib run lime build android -release
 
