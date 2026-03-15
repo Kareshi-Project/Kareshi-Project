@@ -12,7 +12,7 @@
          file="KareshiProject"
          path="export" />
 
-    <!-- Window (Desktop) -->
+    <!-- Window -->
     <window width="1280"
             height="720"
             fps="60"
@@ -22,7 +22,7 @@
     <!-- Game Icon -->
     <icon path="arts/icon.png" />
 
-    <!-- Source code -->
+    <!-- Source -->
     <source path="source" />
 
     <!-- Libraries -->
@@ -33,13 +33,16 @@
     <haxelib name="flixel-ui" />
     <haxelib name="flixel-addons" />
 
+    <!-- Android Tools Extension -->
+    <haxelib name="extension-androidtools" if="android" />
+
     <!-- Assets -->
     <assets path="assets/images" rename="images" />
     <assets path="assets/sounds" rename="sounds" />
     <assets path="assets/music" rename="music" />
     <assets path="assets/data" rename="data" />
 
-    <!-- Android specific settings -->
+    <!-- Android -->
     <android package="com.kareshiproject.game"
              versionCode="1"
              versionName="0.0.1"
