@@ -9,7 +9,6 @@ import flixel.util.FlxColor;
 import flixel.util.FlxTimer;
 import flixel.group.FlxGroup;
 import flixel.tweens.FlxTween;
-import flixel.tweens.FlxTweenType;
 import flixel.tweens.FlxEase;
 import flixel.math.FlxAngle;
 import backend.Controls;
@@ -104,7 +103,7 @@ class Player extends FlxSprite
         alpha      = 0.4;
 
         FlxTween.tween(this, {alpha: 1}, 0.15, {
-            type: FlxTweenType.PINGPONG,
+            type: FlxTween.PINGPONG,
             onComplete: function(t)
             {
                 if (t.executions >= 10)
