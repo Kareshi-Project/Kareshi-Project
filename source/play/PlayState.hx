@@ -13,10 +13,8 @@ class PlayState extends FlxState
     {
         super.create();
 
-        // Fundo preto
         FlxG.camera.bgColor = FlxColor.BLACK;
 
-        // Texto do jogo
         titleText = new FlxText(0, 0, FlxG.width, "Kareshi Project");
         titleText.setFormat(null, 32, FlxColor.WHITE, "center");
         titleText.screenCenter();
@@ -28,10 +26,18 @@ class PlayState extends FlxState
     {
         super.update(elapsed);
 
-        // Reinicia o state apertando R
+        #if desktop
         if (FlxG.keys.justPressed.R)
         {
             FlxG.resetState();
         }
+        #end
+
+        #if mobile
+        if (FlxG.touches.justStarted().length > 0)
+        {
+            FlxG.resetState();
+        }
+        #end
     }
 }
