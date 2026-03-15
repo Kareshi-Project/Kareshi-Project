@@ -7,6 +7,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -20,13 +23,20 @@ jobs:
         with:
           haxe-version: 4.3.6
 
+      - name: Setup haxelib
+        run: |
+          mkdir ~/haxelib
+          haxelib setup ~/haxelib
+
       - name: Install Haxe libraries
         run: |
-          haxelib install lime
-          haxelib install openfl
-          haxelib install flixel
-          haxelib install flixel-ui
-          haxelib install flixel-addons
+          haxelib install hxcpp --quiet
+          haxelib install lime --quiet
+          haxelib install openfl --quiet
+          haxelib install flixel --quiet
+          haxelib install flixel-ui --quiet
+          haxelib install flixel-addons --quiet
+          haxelib install hxdiscord_rpc --quiet
 
       - name: Setup Lime
         run: |
@@ -34,7 +44,7 @@ jobs:
 
       - name: Build Windows
         run: |
-          haxelib run lime build windows
+          haxelib run lime build windows -release
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
