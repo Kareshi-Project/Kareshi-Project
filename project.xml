@@ -42,7 +42,7 @@
     <haxelib name="extension-androidtools" if="android" />
 
     <!-- ==================== Assets ==================== -->
-    <assets path="assets/images" rename="images" />
+    <assets path="assets/images" rename="images" include="*" />
     <assets path="assets/sounds" rename="sounds" />
     <assets path="assets/music"  rename="music" />
     <assets path="assets/data"   rename="data" />
