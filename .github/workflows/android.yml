@@ -11,9 +11,6 @@ jobs:
   build-android:
     runs-on: ubuntu-latest
 
-    env:
-      ANDROID_HOME: /usr/local/android-sdk
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -40,6 +37,11 @@ jobs:
           api-level: 33
           build-tools: 33.0.2
           ndk: 25.2.9519653
+
+      - name: Set Android environment variables
+        run: |
+          echo "ANDROID_SDK=/usr/local/android-sdk" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=/usr/local/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
 
       - name: Setup Lime Android
         run: haxelib run lime setup android
