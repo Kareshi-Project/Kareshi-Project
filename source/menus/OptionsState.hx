@@ -7,11 +7,9 @@ import flixel.text.FlxText;
 import flixel.util.FlxColor;
 import flixel.tweens.FlxTween;
 import flixel.tweens.FlxEase;
-import flixel.group.FlxGroup;
 
 class OptionsState extends FlxState
 {
-    // Opções disponíveis
     static final OPTIONS:Array<String> = [
         "Master Volume",
         "Music Volume",
@@ -22,15 +20,15 @@ class OptionsState extends FlxState
     ];
 
     var bg:FlxSprite;
+    var overlay:FlxSprite;
     var titleText:FlxText;
     var optionTexts:Array<FlxText> = [];
-    var arrowLeft:Array<FlxText>  = [];
-    var arrowRight:Array<FlxText> = [];
-    var valueTexts:Array<FlxText> = [];
+    var arrowLeft:Array<FlxText>   = [];
+    var arrowRight:Array<FlxText>  = [];
+    var valueTexts:Array<FlxText>  = [];
 
     var curSelected:Int = 0;
 
-    // Valores das opções
     var masterVolume:Int = 10;
     var musicVolume:Int  = 10;
     var sfxVolume:Int    = 10;
@@ -43,10 +41,18 @@ class OptionsState extends FlxState
     {
         super.create();
 
-        // Background escuro semitransparente
-        bg = new FlxSprite(0, 0).makeGraphic(FlxG.width, FlxG.height, FlxColor.fromRGB(10, 10, 20));
+        // Background da pasta options
+        bg = new FlxSprite(0, 0);
+        bg.loadGraphic("images/options/optionsBG.png");
+        bg.setGraphicSize(FlxG.width, FlxG.height);
+        bg.updateHitbox();
         bg.alpha = 0;
         add(bg);
+
+        // Overlay escuro para melhorar legibilidade
+        overlay = new FlxSprite(0, 0).makeGraphic(FlxG.width, FlxG.height, FlxColor.fromRGBFloat(0, 0, 0, 0.55));
+        overlay.alpha = 0;
+        add(overlay);
 
         // Título
         titleText = new FlxText(0, 40, FlxG.width, "Options");
@@ -55,12 +61,11 @@ class OptionsState extends FlxState
         titleText.alpha = 0;
         add(titleText);
 
-        // Gera as linhas de opções
+        // Linhas de opções
         for (i in 0...OPTIONS.length)
         {
             var yPos:Float = 160 + i * 72;
 
-            // Nome da opção
             var label = new FlxText(100, yPos, 400, OPTIONS[i]);
             label.setFormat(null, 28, FlxColor.WHITE, "left");
             label.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 2);
@@ -68,7 +73,6 @@ class OptionsState extends FlxState
             add(label);
             optionTexts.push(label);
 
-            // Seta esquerda
             var left = new FlxText(520, yPos, 40, "<");
             left.setFormat(null, 28, FlxColor.YELLOW, "center");
             left.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 2);
@@ -76,7 +80,6 @@ class OptionsState extends FlxState
             add(left);
             arrowLeft.push(left);
 
-            // Valor
             var val = new FlxText(560, yPos, 160, "");
             val.setFormat(null, 28, FlxColor.CYAN, "center");
             val.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 2);
@@ -84,7 +87,6 @@ class OptionsState extends FlxState
             add(val);
             valueTexts.push(val);
 
-            // Seta direita
             var right = new FlxText(720, yPos, 40, ">");
             right.setFormat(null, 28, FlxColor.YELLOW, "center");
             right.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 2);
@@ -97,16 +99,17 @@ class OptionsState extends FlxState
         updateSelection();
 
         // Fade in
-        FlxTween.tween(bg, {alpha: 1}, 0.4, {ease: FlxEase.quartOut});
-        FlxTween.tween(titleText, {alpha: 1}, 0.5, {ease: FlxEase.quartOut});
+        FlxTween.tween(bg,        {alpha: 1},    0.5, {ease: FlxEase.quartOut});
+        FlxTween.tween(overlay,   {alpha: 1},    0.5, {ease: FlxEase.quartOut});
+        FlxTween.tween(titleText, {alpha: 1},    0.5, {ease: FlxEase.quartOut});
 
         for (i in 0...OPTIONS.length)
         {
             var delay = 0.3 + i * 0.07;
-            FlxTween.tween(optionTexts[i],  {alpha: 1}, 0.4, {ease: FlxEase.quartOut, startDelay: delay});
-            FlxTween.tween(arrowLeft[i],    {alpha: 1}, 0.4, {ease: FlxEase.quartOut, startDelay: delay});
-            FlxTween.tween(valueTexts[i],   {alpha: 1}, 0.4, {ease: FlxEase.quartOut, startDelay: delay});
-            FlxTween.tween(arrowRight[i],   {alpha: 1}, 0.4, {
+            FlxTween.tween(optionTexts[i], {alpha: 1}, 0.4, {ease: FlxEase.quartOut, startDelay: delay});
+            FlxTween.tween(arrowLeft[i],   {alpha: 1}, 0.4, {ease: FlxEase.quartOut, startDelay: delay});
+            FlxTween.tween(valueTexts[i],  {alpha: 1}, 0.4, {ease: FlxEase.quartOut, startDelay: delay});
+            FlxTween.tween(arrowRight[i],  {alpha: 1}, 0.4, {
                 ease: FlxEase.quartOut,
                 startDelay: delay,
                 onComplete: i == OPTIONS.length - 1 ? function(_) canInput = true : null
@@ -178,7 +181,6 @@ class OptionsState extends FlxState
             optionTexts[i].color = isSelected ? FlxColor.YELLOW : FlxColor.WHITE;
             optionTexts[i].size  = isSelected ? 30 : 28;
 
-            // Esconde setas no item "Back"
             var showArrows = isSelected && i < OPTIONS.length - 1;
             arrowLeft[i].visible  = showArrows;
             arrowRight[i].visible = showArrows;
@@ -197,16 +199,18 @@ class OptionsState extends FlxState
 
     function applyValues():Void
     {
-        FlxG.sound.volume     = masterVolume / 10;
-        FlxG.sound.music != null ? FlxG.sound.music.volume = musicVolume / 10 : null;
-        FlxG.drawFramerate    = showFPS ? 60 : 60; // placeholder para FPS counter
-        FlxG.fullscreen       = fullscreen;
+        FlxG.sound.volume = masterVolume / 10;
+        if (FlxG.sound.music != null)
+            FlxG.sound.music.volume = musicVolume / 10;
+        FlxG.fullscreen = fullscreen;
     }
 
     function goBack():Void
     {
         canInput = false;
+
         FlxTween.tween(bg,        {alpha: 0}, 0.4, {ease: FlxEase.quartIn});
+        FlxTween.tween(overlay,   {alpha: 0}, 0.4, {ease: FlxEase.quartIn});
         FlxTween.tween(titleText, {alpha: 0}, 0.4, {ease: FlxEase.quartIn});
 
         for (i in 0...OPTIONS.length)
