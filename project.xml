@@ -37,6 +37,7 @@
     <haxelib name="flixel" />
     <haxelib name="flixel-ui" />
     <haxelib name="flixel-addons" />
+    <haxelib name="hxdiscord_rpc" if="desktop" />
 
     <!-- Android-only extension -->
     <haxelib name="extension-androidtools" if="android" />
