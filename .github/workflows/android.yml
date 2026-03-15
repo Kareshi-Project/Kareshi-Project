@@ -1,0 +1,53 @@
+name: Android Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    env:
+      ANDROID_HOME: /usr/local/android-sdk
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Haxe
+        uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: 4.3.6
+
+      - name: Install Haxe libraries
+        run: |
+          haxelib install lime
+          haxelib install openfl
+          haxelib install flixel
+          haxelib install flixel-ui
+          haxelib install flixel-addons
+
+      - name: Setup Lime
+        run: |
+          haxelib run lime setup
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+        with:
+          api-level: 33
+          build-tools: 33.0.2
+          ndk: 25.2.9519653
+
+      - name: Build Android
+        run: |
+          lime build android -release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kareshi-android-apk
+          path: export/android/bin/KareshiProject-release.apk
