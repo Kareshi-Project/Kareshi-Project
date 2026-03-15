@@ -7,6 +7,7 @@ import flixel.text.FlxText;
 import flixel.util.FlxColor;
 import flixel.tweens.FlxTween;
 import flixel.tweens.FlxEase;
+import flixel.input.touch.FlxTouch;
 
 class OptionsState extends FlxState
 {
@@ -26,8 +27,10 @@ class OptionsState extends FlxState
     var arrowLeft:Array<FlxText>   = [];
     var arrowRight:Array<FlxText>  = [];
     var valueTexts:Array<FlxText>  = [];
+    var cursor:FlxSprite;
 
-    var curSelected:Int = 0;
+    var curSelected:Int  = 0;
+    var canInput:Bool    = false;
 
     var masterVolume:Int = 10;
     var musicVolume:Int  = 10;
@@ -35,13 +38,18 @@ class OptionsState extends FlxState
     var fullscreen:Bool  = false;
     var showFPS:Bool     = false;
 
-    var canInput:Bool = false;
+    // ==================== Mobile Touch ====================
+    var touchStartX:Float = 0;
+    var touchStartY:Float = 0;
+    var touchMoved:Bool   = false;
+    static final SWIPE_THRESHOLD:Float = 40;
+    static final TAP_THRESHOLD:Float   = 10;
 
     override public function create():Void
     {
         super.create();
 
-        // Background da pasta options
+        // Background
         bg = new FlxSprite(0, 0);
         bg.loadGraphic("images/options/optionsBG.png");
         bg.setGraphicSize(FlxG.width, FlxG.height);
@@ -49,45 +57,55 @@ class OptionsState extends FlxState
         bg.alpha = 0;
         add(bg);
 
-        // Overlay escuro para melhorar legibilidade
+        // Overlay
         overlay = new FlxSprite(0, 0).makeGraphic(FlxG.width, FlxG.height, FlxColor.fromRGBFloat(0, 0, 0, 0.55));
         overlay.alpha = 0;
         add(overlay);
 
         // Título
-        titleText = new FlxText(0, 40, FlxG.width, "Options");
+        titleText = new FlxText(0, 30, FlxG.width, "Options");
         titleText.setFormat(null, 48, FlxColor.WHITE, "center");
         titleText.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 4);
         titleText.alpha = 0;
         add(titleText);
 
-        // Linhas de opções
+        // Separador
+        var separator = new FlxSprite(FlxG.width * 0.1, 90).makeGraphic(Std.int(FlxG.width * 0.8), 2, FlxColor.fromRGBFloat(1, 1, 1, 0.25));
+        separator.alpha = 0;
+        add(separator);
+
+        // Cursor
+        cursor = new FlxSprite(0, 0).makeGraphic(8, 36, FlxColor.YELLOW);
+        cursor.alpha = 0;
+        add(cursor);
+
+        // Itens do menu
         for (i in 0...OPTIONS.length)
         {
-            var yPos:Float = 160 + i * 72;
+            var yPos:Float = 150 + i * 76;
 
-            var label = new FlxText(100, yPos, 400, OPTIONS[i]);
+            var label = new FlxText(120, yPos, 380, OPTIONS[i]);
             label.setFormat(null, 28, FlxColor.WHITE, "left");
             label.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 2);
             label.alpha = 0;
             add(label);
             optionTexts.push(label);
 
-            var left = new FlxText(520, yPos, 40, "<");
+            var left = new FlxText(510, yPos, 40, "<");
             left.setFormat(null, 28, FlxColor.YELLOW, "center");
             left.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 2);
             left.alpha = 0;
             add(left);
             arrowLeft.push(left);
 
-            var val = new FlxText(560, yPos, 160, "");
+            var val = new FlxText(550, yPos, 180, "");
             val.setFormat(null, 28, FlxColor.CYAN, "center");
             val.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 2);
             val.alpha = 0;
             add(val);
             valueTexts.push(val);
 
-            var right = new FlxText(720, yPos, 40, ">");
+            var right = new FlxText(730, yPos, 40, ">");
             right.setFormat(null, 28, FlxColor.YELLOW, "center");
             right.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 2);
             right.alpha = 0;
@@ -99,13 +117,15 @@ class OptionsState extends FlxState
         updateSelection();
 
         // Fade in
-        FlxTween.tween(bg,        {alpha: 1},    0.5, {ease: FlxEase.quartOut});
-        FlxTween.tween(overlay,   {alpha: 1},    0.5, {ease: FlxEase.quartOut});
-        FlxTween.tween(titleText, {alpha: 1},    0.5, {ease: FlxEase.quartOut});
+        FlxTween.tween(bg,        {alpha: 1}, 0.5, {ease: FlxEase.quartOut});
+        FlxTween.tween(overlay,   {alpha: 1}, 0.5, {ease: FlxEase.quartOut});
+        FlxTween.tween(titleText, {alpha: 1}, 0.5, {ease: FlxEase.quartOut});
+        FlxTween.tween(separator, {alpha: 1}, 0.5, {ease: FlxEase.quartOut, startDelay: 0.1});
+        FlxTween.tween(cursor,    {alpha: 1}, 0.4, {ease: FlxEase.quartOut, startDelay: 0.2});
 
         for (i in 0...OPTIONS.length)
         {
-            var delay = 0.3 + i * 0.07;
+            var delay = 0.2 + i * 0.06;
             FlxTween.tween(optionTexts[i], {alpha: 1}, 0.4, {ease: FlxEase.quartOut, startDelay: delay});
             FlxTween.tween(arrowLeft[i],   {alpha: 1}, 0.4, {ease: FlxEase.quartOut, startDelay: delay});
             FlxTween.tween(valueTexts[i],  {alpha: 1}, 0.4, {ease: FlxEase.quartOut, startDelay: delay});
@@ -123,7 +143,22 @@ class OptionsState extends FlxState
 
         if (!canInput) return;
 
+        // Cursor pisca
+        cursor.alpha = 0.5 + Math.sin(haxe.Timer.stamp() * 6) * 0.5;
+
         #if desktop
+        handleKeyboard();
+        #end
+
+        #if mobile
+        handleTouch();
+        #end
+    }
+
+    // ==================== Keyboard ====================
+
+    function handleKeyboard():Void
+    {
         if (FlxG.keys.justPressed.UP)
             changeSelection(-1);
         else if (FlxG.keys.justPressed.DOWN)
@@ -136,13 +171,84 @@ class OptionsState extends FlxState
             confirmSelection();
         else if (FlxG.keys.justPressed.ESCAPE || FlxG.keys.justPressed.X)
             goBack();
-        #end
-
-        #if mobile
-        if (FlxG.touches.justStarted().length > 0)
-            confirmSelection();
-        #end
     }
+
+    // ==================== Touch ====================
+
+    function handleTouch():Void
+    {
+        var touches = FlxG.touches.list;
+
+        // Início do toque
+        for (touch in FlxG.touches.justStarted())
+        {
+            touchStartX = touch.screenX;
+            touchStartY = touch.screenY;
+            touchMoved  = false;
+        }
+
+        // Movimento: deslize vertical muda seleção, horizontal muda valor
+        for (touch in touches)
+        {
+            var dx = touch.screenX - touchStartX;
+            var dy = touch.screenY - touchStartY;
+
+            if (!touchMoved)
+            {
+                if (Math.abs(dy) > SWIPE_THRESHOLD)
+                {
+                    touchMoved = true;
+                    changeSelection(dy > 0 ? 1 : -1);
+                    touchStartY = touch.screenY;
+                }
+                else if (Math.abs(dx) > SWIPE_THRESHOLD)
+                {
+                    touchMoved = true;
+                    changeValue(dx > 0 ? 1 : -1);
+                    touchStartX = touch.screenX;
+                }
+            }
+        }
+
+        // Toque rápido (tap): detecta item tocado ou confirma seleção
+        for (touch in FlxG.touches.justReleased())
+        {
+            var dx = Math.abs(touch.screenX - touchStartX);
+            var dy = Math.abs(touch.screenY - touchStartY);
+
+            if (dx < TAP_THRESHOLD && dy < TAP_THRESHOLD)
+            {
+                // Verifica se tocou em algum item
+                var tapped = false;
+                for (i in 0...optionTexts.length)
+                {
+                    if (optionTexts[i].overlapsPoint(touch.getWorldPosition()))
+                    {
+                        tapped = true;
+                        if (curSelected == i)
+                            confirmSelection();
+                        else
+                        {
+                            curSelected = i;
+                            updateSelection();
+                        }
+                        break;
+                    }
+                }
+
+                // Tocou nas setas
+                if (!tapped)
+                {
+                    if (arrowLeft[curSelected].overlapsPoint(touch.getWorldPosition()))
+                        changeValue(-1);
+                    else if (arrowRight[curSelected].overlapsPoint(touch.getWorldPosition()))
+                        changeValue(1);
+                }
+            }
+        }
+    }
+
+    // ==================== Lógica ====================
 
     function changeSelection(dir:Int):Void
     {
@@ -186,6 +292,11 @@ class OptionsState extends FlxState
             arrowRight[i].visible = showArrows;
             valueTexts[i].visible = i < OPTIONS.length - 1;
         }
+
+        // Posiciona cursor
+        var sel = optionTexts[curSelected];
+        cursor.x = sel.x - 20;
+        cursor.y = sel.y + (sel.height - cursor.height) / 2;
     }
 
     function refreshValues():Void
@@ -205,6 +316,8 @@ class OptionsState extends FlxState
         FlxG.fullscreen = fullscreen;
     }
 
+    // ==================== Transição ====================
+
     function goBack():Void
     {
         canInput = false;
@@ -212,6 +325,7 @@ class OptionsState extends FlxState
         FlxTween.tween(bg,        {alpha: 0}, 0.4, {ease: FlxEase.quartIn});
         FlxTween.tween(overlay,   {alpha: 0}, 0.4, {ease: FlxEase.quartIn});
         FlxTween.tween(titleText, {alpha: 0}, 0.4, {ease: FlxEase.quartIn});
+        FlxTween.tween(cursor,    {alpha: 0}, 0.3, {ease: FlxEase.quartIn});
 
         for (i in 0...OPTIONS.length)
         {
@@ -221,8 +335,7 @@ class OptionsState extends FlxState
             FlxTween.tween(arrowRight[i],  {alpha: 0}, 0.3, {
                 ease: FlxEase.quartIn,
                 startDelay: i * 0.04,
-                onComplete: i == OPTIONS.length - 1 ? function(_) FlxG.switchState(new menus.TitleState()) : null
+                onComplete: i == OPTIONS.length - 1 ? function(_) FlxG.switchState(new menus.MainMenuState()) : null
             });
         }
     }
-}
