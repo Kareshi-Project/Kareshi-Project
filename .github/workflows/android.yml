@@ -23,10 +23,10 @@ jobs:
           mkdir ~/haxelib
           haxelib setup ~/haxelib
 
-      - name: Install Build Tools
+      - name: Install Linux Build Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential clang
+          sudo apt-get install -y build-essential clang libc++-dev libc++abi-dev
 
       - name: Install Haxe Libraries
         run: |
@@ -36,6 +36,7 @@ jobs:
           haxelib install flixel
           haxelib install flixel-ui
           haxelib install flixel-addons
+          haxelib git extension-androidtools https://github.com/openfl/extension-androidtools
 
       - name: Setup Lime
         run: |
