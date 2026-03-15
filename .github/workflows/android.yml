@@ -30,7 +30,11 @@ jobs:
       - name: Install Linux build tools
         run: |
           sudo apt update
-          sudo apt install -y build-essential clang libc++-dev libc++abi-dev
+          sudo apt install -y \
+            build-essential \
+            clang \
+            libc++-dev \
+            libc++abi-dev
 
       - name: Install Haxe libraries
         run: |
@@ -42,27 +46,31 @@ jobs:
           haxelib install flixel-addons --quiet
           haxelib install extension-androidtools --quiet
 
-      - name: Fix Android SDK
-        run: |
-          rm -rf $ANDROID_HOME/platforms/android-35
-          sdkmanager "platforms;android-35" "build-tools;35.0.0" "ndk;21.4.7075529"
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Configure Lime for Android
+      - name: Install NDK r21e
+        run: |
+          sdkmanager "ndk;21.4.7075529"
+
+      - name: Install Android Build Tools
+        run: |
+          sdkmanager "build-tools;33.0.2" "platforms;android-33"
+
+      - name: Configure Android paths for Lime
         run: |
           haxelib run lime config ANDROID_SDK $ANDROID_HOME
           haxelib run lime config ANDROID_NDK_ROOT $ANDROID_HOME/ndk/21.4.7075529
           haxelib run lime config JAVA_HOME $JAVA_HOME
           haxelib run lime config ANDROID_SETUP true
 
-      - name: Generate Gradle project
+      - name: Build APK
         run: |
-          haxelib run lime update android -debug
+          haxelib run lime build android -debug
 
-      - name: Assemble APK
+      - name: Find APK
         run: |
-          cd export/android/bin
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          find export/ -name "*.apk" | tee apk_paths.txt
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
