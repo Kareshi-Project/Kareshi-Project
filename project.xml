@@ -88,8 +88,9 @@
     <!-- Gradle versions compatíveis com NDK r21e -->
     <config:android gradle-version="7.4.2" gradle-plugin="7.3.1" if="android" />
 
-    <!-- Build tools -->
+    <!-- Build tools + compile SDK explícito (evita conflito com android-35 do runner) -->
     <config:android build-tools-version="33.0.2" if="android" />
+    <config:android compile-sdk-version="33"     if="android" />
 
     <!-- Força geração do APK final ao invés de só o projeto Gradle -->
     <config:android assemble-release="true" unless="debug" />
