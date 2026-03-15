@@ -25,8 +25,9 @@ jobs:
 
       - name: Setup haxelib
         run: |
-          mkdir ~/haxelib
+          if (!(Test-Path ~/haxelib)) { mkdir ~/haxelib }
           haxelib setup ~/haxelib
+        shell: pwsh
 
       - name: Install Haxe libraries
         run: |
