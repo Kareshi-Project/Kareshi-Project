@@ -15,10 +15,13 @@ class Discord
     static var initialized:Bool  = false;
     static var rpcThread:Thread  = null;
 
-    // Dados do presence atual
     static var currentState:String   = "";
     static var currentDetails:String = "";
     static var startTimestamp:Float  = 0;
+
+    static final COLOR_GOOD:Int   = 0x64FF78;
+    static final COLOR_MEDIUM:Int = 0xFFDC3C;
+    static final COLOR_BAD:Int    = 0xFF5050;
 
     // ==================== Init ====================
 
@@ -27,16 +30,15 @@ class Discord
         if (initialized) return;
 
         var handlers = new DiscordEventHandlers();
-        handlers.ready         = cpp.Function.fromStaticFunction(onReady);
-        handlers.disconnected  = cpp.Function.fromStaticFunction(onDisconnected);
-        handlers.errored       = cpp.Function.fromStaticFunction(onError);
+        handlers.ready        = cpp.Function.fromStaticFunction(onReady);
+        handlers.disconnected = cpp.Function.fromStaticFunction(onDisconnected);
+        handlers.errored      = cpp.Function.fromStaticFunction(onError);
 
-        DiscordRPC.Initialize(CLIENT_ID, cpp.RawPointer.addressOf(handlers), 1, null);
+        DiscordRPC.Initialize(CLIENT_ID, cpp.RawPointer.addressOf(handlers), true, null);
 
         initialized    = true;
         startTimestamp = Date.now().getTime() / 1000;
 
-        // Thread separada para callbacks do RPC
         rpcThread = Thread.create(function()
         {
             while (initialized)
@@ -71,7 +73,7 @@ class Discord
         currentDetails = details;
         currentState   = state;
 
-        var presence = new RichPresence();
+        var presence = new DiscordRichPresence();
 
         presence.details        = details;
         presence.state          = state;
