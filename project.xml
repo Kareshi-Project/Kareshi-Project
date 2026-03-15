@@ -48,53 +48,29 @@
     <assets path="assets/data"   rename="data" />
 
     <!-- ==================== Build Flags ==================== -->
+    <!-- Debug builds -->
     <haxeflag name="-debug" if="debug" />
     <define name="FLX_NO_FOCUS_LOST_SCREEN" if="debug" />
-    <define name="FLX_NO_MOUSE"    if="mobile" />
+
+    <!-- Disable unused Flixel features to reduce APK size -->
+    <define name="FLX_NO_MOUSE"   if="mobile" />
     <define name="FLX_NO_KEYBOARD" if="mobile" />
 
-    <!-- ==================== Android Config ==================== -->
+    <!-- ==================== Android ==================== -->
     <android package="com.kareshiproject.game"
              versionCode="1"
              versionName="0.0.1"
              minSdkVersion="21"
-             targetSdkVersion="35"
-             orientation="landscape"
-             screenOrientation="landscape"
-             appLabel="Kareshi Project"
-             apkFileName="KareshiProject-debug.apk"
-             allowBackup="false"
-             supportsRtl="false"
-             if="debug" />
-
-    <android package="com.kareshiproject.game"
-             versionCode="1"
-             versionName="0.0.1"
-             minSdkVersion="21"
-             targetSdkVersion="35"
+             targetSdkVersion="33"
              orientation="landscape"
              screenOrientation="landscape"
              appLabel="Kareshi Project"
              apkFileName="KareshiProject-release.apk"
              allowBackup="false"
-             supportsRtl="false"
-             unless="debug" />
+             supportsRtl="false" />
 
     <!-- Android permissions -->
     <android permission="android.permission.VIBRATE" />
-    <android permission="android.permission.INTERNET" />
-    <android permission="android.permission.ACCESS_NETWORK_STATE" />
-
-    <!-- Gradle versions compatíveis com NDK r21e -->
-    <config:android gradle-version="7.4.2" gradle-plugin="7.3.1" if="android" />
-
-    <!-- Build tools + compile SDK alinhados com android-35 -->
-    <config:android build-tools-version="35.0.0" if="android" />
-    <config:android compile-sdk-version="35"     if="android" />
-
-    <!-- Força geração do APK final -->
-    <config:android assemble-debug="true"   if="debug" />
-    <config:android assemble-release="true" unless="debug" />
 
     <!-- ==================== iOS (future) ==================== -->
     <ios deployment="12" />
