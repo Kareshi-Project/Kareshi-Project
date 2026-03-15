@@ -11,6 +11,7 @@ import flixel.group.FlxGroup;
 import flixel.tweens.FlxTween;
 import flixel.tweens.FlxEase;
 import flixel.math.FlxAngle;
+import flixel.effects.FlxFlicker;
 import backend.Controls;
 import backend.Controls.Action;
 
@@ -100,19 +101,10 @@ class Player extends FlxSprite
 
         lives--;
         invincible = true;
-        alpha      = 0.4;
 
-        FlxTween.tween(this, {alpha: 1}, 0.15, {
-            type: FlxTween.PINGPONG,
-            onComplete: function(t)
-            {
-                if (t.executions >= 10)
-                {
-                    t.cancel();
-                    alpha      = 1;
-                    invincible = false;
-                }
-            }
+        FlxFlicker.flicker(this, 2.0, 0.15, true, true, function(_)
+        {
+            invincible = false;
         });
 
         return lives <= 0;
