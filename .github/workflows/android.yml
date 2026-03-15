@@ -49,6 +49,10 @@ jobs:
         run: |
           sdkmanager "platforms;android-33" "build-tools;33.0.2" "ndk;21.4.7075529"
 
+      - name: Remove broken android-35
+        run: |
+          rm -rf $ANDROID_HOME/platforms/android-35
+
       - name: Configure Lime for Android
         run: |
           haxelib run lime config ANDROID_SDK $ANDROID_HOME
