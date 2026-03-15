@@ -2,7 +2,7 @@ package;
 
 import openfl.display.Sprite;
 import flixel.FlxGame;
-import play.PlayState;
+import menus.TitleState;
 
 class Main extends Sprite
 {
@@ -10,7 +10,7 @@ class Main extends Sprite
     {
         super();
 
-        var game = new FlxGame(1280, 720, PlayState);
+        var game = new FlxGame(1280, 720, TitleState);
         addChild(game);
     }
 }
