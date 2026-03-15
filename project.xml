@@ -7,14 +7,14 @@
           version="0.0.1"
           company="Kareshi Project Team" />
 
-    <!-- Window -->
+    <!-- Window (Desktop) -->
     <window width="1280"
             height="720"
             fps="60"
             background="#000000"
             vsync="true" />
 
-    <!-- Source -->
+    <!-- Source code -->
     <source path="source" />
 
     <!-- Libraries -->
@@ -30,7 +30,19 @@
     <assets path="assets/music" rename="music" />
     <assets path="assets/data" rename="data" />
 
-    <!-- Windows Settings -->
+    <!-- Android specific settings -->
     <app main="Main" file="KareshiProject" path="export" />
+
+    <android package="com.kareshiproject.game"
+             versionCode="1"
+             versionName="0.0.1"
+             minSdkVersion="21"
+             targetSdkVersion="33"
+             orientation="landscape"
+             screenOrientation="landscape"
+             appLabel="Kareshi Project"
+             apkFileName="KareshiProject-release.apk"
+             allowBackup="true"
+             supportsRtl="true" />
 
 </project>
