@@ -8,7 +8,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-android:
+  android-build:
+    name: Build Android
     runs-on: ubuntu-latest
 
     steps:
@@ -46,7 +47,7 @@ jobs:
       - name: Setup Lime Android
         run: haxelib run lime setup android
 
-      - name: Build Android
+      - name: Build Android APK
         run: haxelib run lime build android -release
 
       - name: Upload APK
