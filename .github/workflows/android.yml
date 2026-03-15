@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -18,17 +19,21 @@ jobs:
         with:
           haxe-version: 4.3.6
 
-      - name: Setup Haxelib
+      - name: Setup haxelib
         run: |
           mkdir ~/haxelib
           haxelib setup ~/haxelib
 
-      - name: Install Linux Build Tools
+      - name: Install Linux build tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential clang libc++-dev libc++abi-dev
+          sudo apt update
+          sudo apt install -y \
+            build-essential \
+            clang \
+            libc++-dev \
+            libc++abi-dev
 
-      - name: Install Haxe Libraries
+      - name: Install Haxe libraries
         run: |
           haxelib install hxcpp
           haxelib install lime
@@ -38,23 +43,23 @@ jobs:
           haxelib install flixel-addons
           haxelib git extension-androidtools https://github.com/openfl/extension-androidtools
 
-      - name: Setup Lime
-        run: |
-          haxelib run lime setup
-
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android NDK
+      - name: Install NDK
         run: |
           sdkmanager "ndk;23.1.7779620"
 
-      - name: Set Android Environment
+      - name: Configure Android paths
         run: |
           echo "ANDROID_SDK=$ANDROID_HOME" >> $GITHUB_ENV
           echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/23.1.7779620" >> $GITHUB_ENV
 
-      - name: Setup Lime Android
+      - name: Lime setup
+        run: |
+          haxelib run lime setup
+
+      - name: Lime setup android
         run: |
           haxelib run lime setup android
 
@@ -68,5 +73,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Kareshi-Android
+          name: kareshi-android
           path: export/android/bin
