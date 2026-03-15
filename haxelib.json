@@ -1,30 +1,34 @@
 {
   "name": "kareshi-project",
   "url": "https://github.com/Kareshi-Project/Kareshi-Project",
-  "license": "MIT",
+  "license": "Apache",
   "tags": [
     "game",
     "haxe",
     "haxeflixel",
     "openfl",
+    "lime",
     "android",
     "desktop",
     "bullet-hell",
-    "danmaku"
+    "danmaku",
+    "touhou",
+    "fangame"
   ],
-  "description": "Kareshi Project is a Touhou-style bullet hell game built with HaxeFlixel.",
+  "description": "Kareshi Project is a Touhou-style bullet hell (danmaku) fangame built with HaxeFlixel.",
   "version": "0.0.1",
   "classPath": "source",
   "releasenote": "Initial development build of Kareshi Project.",
   "contributors": [
-    "Kareshi Project Team"
+    "Brenninho123"
   ],
   "dependencies": {
-    "hxcpp": "4.3.2",
-    "lime": "8.1.3",
-    "openfl": "9.3.3",
-    "flixel": "5.6.0",
-    "flixel-ui": "2.6.1",
-    "flixel-addons": "3.2.3"
+    "hxcpp": "",
+    "lime": "",
+    "openfl": "",
+    "flixel": "",
+    "flixel-ui": "",
+    "flixel-addons": "",
+    "extension-androidtools": ""
   }
 }
