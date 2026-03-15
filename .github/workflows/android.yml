@@ -41,6 +41,9 @@ jobs:
           build-tools: 33.0.2
           ndk: 25.2.9519653
 
+      - name: Setup Lime Android
+        run: haxelib run lime setup android
+
       - name: Build Android
         run: haxelib run lime build android -release
 
