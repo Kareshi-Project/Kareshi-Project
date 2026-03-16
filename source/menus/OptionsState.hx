@@ -8,9 +8,23 @@ import flixel.util.FlxColor;
 import flixel.tweens.FlxTween;
 import flixel.tweens.FlxEase;
 import flixel.input.touch.FlxTouch;
+import backend.debug.DebugDisplay;
 
 class OptionsState extends FlxState
 {
+    // ==================== Opções ====================
+
+    #if desktop
+    static final OPTIONS:Array<String> = [
+        "Master Volume",
+        "Music Volume",
+        "SFX Volume",
+        "Fullscreen",
+        "FPS Counter",
+        "Discord RPC",
+        "Back"
+    ];
+    #else
     static final OPTIONS:Array<String> = [
         "Master Volume",
         "Music Volume",
@@ -19,6 +33,7 @@ class OptionsState extends FlxState
         "FPS Counter",
         "Back"
     ];
+    #end
 
     var bg:FlxSprite;
     var overlay:FlxSprite;
@@ -29,16 +44,29 @@ class OptionsState extends FlxState
     var valueTexts:Array<FlxText>  = [];
     var cursor:FlxSprite;
 
-    var curSelected:Int  = 0;
-    var canInput:Bool    = false;
+    var curSelected:Int = 0;
+    var canInput:Bool   = false;
 
-    var masterVolume:Int = 10;
-    var musicVolume:Int  = 10;
-    var sfxVolume:Int    = 10;
-    var fullscreen:Bool  = false;
-    var showFPS:Bool     = false;
+    // ==================== Valores ====================
+
+    var masterVolume:Int  = 10;
+    var musicVolume:Int   = 10;
+    var sfxVolume:Int     = 10;
+    var fullscreen:Bool   = false;
+    var showFPS:Bool      = false;
+
+    #if desktop
+    var discordRPC:Bool   = true;
+    #end
+
+    // ==================== Debug ====================
+
+    #if debug
+    var debugDisplay:DebugDisplay;
+    #end
 
     // ==================== Mobile Touch ====================
+
     var touchStartX:Float = 0;
     var touchStartY:Float = 0;
     var touchMoved:Bool   = false;
@@ -81,7 +109,7 @@ class OptionsState extends FlxState
         cursor.alpha = 0;
         add(cursor);
 
-        // Itens do menu
+        // Itens
         for (i in 0...OPTIONS.length)
         {
             var yPos:Float = 150 + i * 76;
@@ -117,6 +145,17 @@ class OptionsState extends FlxState
 
         refreshValues();
         updateSelection();
+
+        // Debug display
+        #if debug
+        debugDisplay = new DebugDisplay(FlxG.width - 188, 4);
+        add(debugDisplay);
+        #end
+
+        // Discord presence
+        #if desktop
+        discord.Discord.setInOptions();
+        #end
 
         // Fade in
         FlxTween.tween(bg,        {alpha: 1}, 0.5, {ease: FlxEase.quartOut});
@@ -175,11 +214,18 @@ class OptionsState extends FlxState
             confirmSelection();
         else if (FlxG.keys.justPressed.ESCAPE || FlxG.keys.justPressed.X)
             goBack();
+
+        // Toggle debug com F2
+        #if debug
+        if (FlxG.keys.justPressed.F2)
+            debugDisplay.toggle();
+        #end
     }
     #end
 
     // ==================== Touch ====================
 
+    #if mobile
     function handleTouch():Void
     {
         for (touch in FlxG.touches.justStarted())
@@ -245,6 +291,7 @@ class OptionsState extends FlxState
             }
         }
     }
+    #end
 
     // ==================== Lógica ====================
 
@@ -263,6 +310,9 @@ class OptionsState extends FlxState
             case 2: sfxVolume    = Std.int(Math.max(0, Math.min(10, sfxVolume    + dir)));
             case 3: fullscreen   = !fullscreen;
             case 4: showFPS      = !showFPS;
+            #if desktop
+            case 5: toggleDiscord();
+            #end
             default:
         }
         applyValues();
@@ -303,6 +353,13 @@ class OptionsState extends FlxState
         valueTexts[2].text = sfxVolume    + " / 10";
         valueTexts[3].text = fullscreen   ? "ON" : "OFF";
         valueTexts[4].text = showFPS      ? "ON" : "OFF";
+
+        #if desktop
+        valueTexts[5].text  = discordRPC ? "ON" : "OFF";
+        valueTexts[5].color = discordRPC
+            ? FlxColor.fromRGB(114, 137, 218)  // cor do Discord
+            : FlxColor.fromRGBFloat(0.5, 0.5, 0.5);
+        #end
     }
 
     function applyValues():Void
@@ -311,7 +368,33 @@ class OptionsState extends FlxState
         if (FlxG.sound.music != null)
             FlxG.sound.music.volume = musicVolume / 10;
         FlxG.fullscreen = fullscreen;
+
+        #if debug
+        if (showFPS)
+            debugDisplay.visible = true;
+        else
+            debugDisplay.visible = false;
+        #end
     }
+
+    // ==================== Discord ====================
+
+    #if desktop
+    function toggleDiscord():Void
+    {
+        discordRPC = !discordRPC;
+
+        if (discordRPC)
+        {
+            discord.Discord.init();
+            discord.Discord.setInOptions();
+        }
+        else
+        {
+            discord.Discord.shutdown();
+        }
+    }
+    #end
 
     // ==================== Transição ====================
 
