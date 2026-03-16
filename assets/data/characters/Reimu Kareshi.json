@@ -1,0 +1,93 @@
+{
+  "id": "reimu_kareshi",
+  "name": "Reimu Kareshi",
+  "title": "The Wandering Shrine Maiden",
+  "description": "A shrine maiden who wanders between worlds, wielding sacred talismans and homing amulets in battle.",
+
+  "stats": {
+    "lives": 3,
+    "bombs": 3,
+    "moveSpeed": 200,
+    "focusSpeed": 90,
+    "hitboxRadius": 3,
+    "power": 1.0,
+    "collectRadius": 32
+  },
+
+  "sprite": {
+    "path": "images/characters/reimu_kareshi.png",
+    "frameWidth": 32,
+    "frameHeight": 48,
+    "animations": {
+      "idle":       { "frames": [0],       "frameRate": 1,  "looped": true  },
+      "moveLeft":   { "frames": [1, 2, 3], "frameRate": 10, "looped": true  },
+      "moveRight":  { "frames": [4, 5, 6], "frameRate": 10, "looped": true  },
+      "death":      { "frames": [7, 8, 9], "frameRate": 8,  "looped": false }
+    }
+  },
+
+  "hitbox": {
+    "width": 6,
+    "height": 6,
+    "color": "#FFFFFF",
+    "showOnFocus": true
+  },
+
+  "shotTypes": [
+    {
+      "id": "spread",
+      "name": "Spread Shot",
+      "description": "5 bullets spread in a fan pattern.",
+      "cooldown": 0.09,
+      "bullets": [
+        { "angle": -90, "speed": 560, "color": "#64DCFF", "radius": 4, "damage": 1.0 },
+        { "angle": -93, "speed": 540, "color": "#50C8FF", "radius": 3, "damage": 0.9 },
+        { "angle": -87, "speed": 540, "color": "#50C8FF", "radius": 3, "damage": 0.9 },
+        { "angle": -98, "speed": 510, "color": "#3CB4FF", "radius": 3, "damage": 0.8 },
+        { "angle": -82, "speed": 510, "color": "#3CB4FF", "radius": 3, "damage": 0.8 }
+      ]
+    },
+    {
+      "id": "focus",
+      "name": "Focused Shot",
+      "description": "3 concentrated bullets with higher damage.",
+      "cooldown": 0.06,
+      "bullets": [
+        { "angle": -90, "speed": 650, "color": "#DCFFFF", "radius": 4, "damage": 1.5 },
+        { "angle": -90, "speed": 640, "color": "#B4E6FF", "radius": 3, "damage": 1.2, "offsetX": -4 },
+        { "angle": -90, "speed": 640, "color": "#B4E6FF", "radius": 3, "damage": 1.2, "offsetX":  4 }
+      ]
+    }
+  ],
+
+  "bomb": {
+    "id": "fantasy_seal",
+    "name": "Fantasy Seal",
+    "description": "Releases a burst of homing amulets that seek out enemies.",
+    "duration": 3.0,
+    "invincibleDuration": 3.0,
+    "damage": 50.0,
+    "bulletCount": 24,
+    "bulletSpeed": 250,
+    "bulletColor": "#FF96BE",
+    "bulletRadius": 6
+  },
+
+  "colors": {
+    "primary":    "#64DCFF",
+    "secondary":  "#FF96BE",
+    "ui":         "#FFFFFF",
+    "name":       "#FFE0E8"
+  },
+
+  "unlock": {
+    "unlocked": true,
+    "condition": ""
+  },
+
+  "lore": {
+    "stage1": "A strange disturbance has been felt near the border...",
+    "stage2": "The incidents grow stronger. Someone is pulling the strings.",
+    "ending": "With the incident resolved, she returns to her endless wandering."
+  }
+}
