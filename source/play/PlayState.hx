@@ -11,9 +11,7 @@ import flixel.group.FlxGroup;
 import flixel.tweens.FlxTween;
 import flixel.tweens.FlxEase;
 import flixel.math.FlxAngle;
-import flixel.math.FlxMath;
 import flixel.effects.FlxFlicker;
-import flixel.input.touch.FlxTouch;
 import backend.Controls;
 import backend.Controls.Action;
 
@@ -36,10 +34,9 @@ class Bullet extends FlxSprite
         speed     = spd;
         moveAngle = fireAngle;
 
-        makeGraphic(radius * 2, radius * 2, FlxColor.TRANSPARENT);
-        drawCircle(col, radius);
+        makeGraphic(radius * 2 + 4, radius * 2 + 4, FlxColor.TRANSPARENT);
+        drawCircleBullet(col, radius);
 
-        color = col;
         setPosition(x - width / 2, y - height / 2);
         velocity.set(
             Math.cos(fireAngle * Math.PI / 180) * spd,
@@ -51,30 +48,37 @@ class Bullet extends FlxSprite
         alive  = true;
     }
 
-    function drawCircle(col:FlxColor, radius:Int):Void
+    function drawCircleBullet(col:FlxColor, radius:Int):Void
     {
-        var glow = FlxColor.fromRGBFloat(
-            col.redFloat   * 0.6 + 0.4,
-            col.greenFloat * 0.6 + 0.4,
-            col.blueFloat  * 0.6 + 0.4,
-            0.4
-        );
-        makeGraphic(radius * 2 + 4, radius * 2 + 4, FlxColor.TRANSPARENT);
-        // Glow externo
+        var cx = pixels.width  / 2;
+        var cy = pixels.height / 2;
         for (px in 0...pixels.width)
         {
             for (py in 0...pixels.height)
             {
-                var cx = px - (radius + 2);
-                var cy = py - (radius + 2);
-                var dist = Math.sqrt(cx * cx + cy * cy);
+                var dx   = px - cx;
+                var dy   = py - cy;
+                var dist = Math.sqrt(dx * dx + dy * dy);
                 if (dist <= radius + 2)
                 {
-                    var a = dist <= radius ? 1.0 : 1.0 - (dist - radius) / 2;
-                    var c = dist <= radius * 0.5
-                        ? FlxColor.WHITE
-                        : (dist <= radius ? col : glow);
-                    c.alphaFloat = a;
+                    var a:Float;
+                    var c:FlxColor;
+                    if (dist <= radius * 0.4)
+                    {
+                        c = FlxColor.WHITE;
+                        a = 1.0;
+                    }
+                    else if (dist <= radius)
+                    {
+                        c = col;
+                        a = 1.0;
+                    }
+                    else
+                    {
+                        c = col;
+                        a = 1.0 - (dist - radius) / 2;
+                    }
+                    c = FlxColor.fromRGBFloat(c.redFloat, c.greenFloat, c.blueFloat, Math.max(0, a));
                     pixels.setPixel32(px, py, c);
                 }
             }
@@ -130,40 +134,33 @@ class Player extends FlxSprite
         setSize(5, 5);
         centerOffsets();
 
-        // Hitbox visual
         hitboxSprite = new FlxSprite();
-        hitboxSprite.makeGraphic(10, 10, FlxColor.TRANSPARENT);
+        hitboxSprite.makeGraphic(12, 12, FlxColor.TRANSPARENT);
         drawHitbox();
         hitboxSprite.exists = false;
 
-        // Anel de foco girando
         focusRing = new FlxSprite();
-        focusRing.makeGraphic(32, 32, FlxColor.TRANSPARENT);
+        focusRing.makeGraphic(36, 36, FlxColor.TRANSPARENT);
         drawFocusRing();
         focusRing.exists = false;
     }
 
     function drawPlayerSprite():Void
     {
-        // Corpo triangular estilo danmaku
         for (px in 0...pixels.width)
         {
             for (py in 0...pixels.height)
             {
-                var cx    = px - pixels.width  / 2;
-                var cy    = py - pixels.height / 2;
-                var norm  = 1 - (py / pixels.height);
+                var cx   = px - pixels.width  / 2;
+                var norm = 1 - (py / pixels.height);
                 var halfW = (pixels.width / 2) * norm * 0.9;
-
                 if (Math.abs(cx) <= halfW)
                 {
-                    var glow = norm > 0.7 ? FlxColor.WHITE : FlxColor.fromRGB(100, 220, 255);
-                    pixels.setPixel32(px, py, glow);
+                    var col = norm > 0.7 ? FlxColor.WHITE : FlxColor.fromRGB(100, 220, 255);
+                    pixels.setPixel32(px, py, col);
                 }
             }
         }
-
-        // Brilho central
         for (py in 4...pixels.height - 4)
         {
             var norm  = 1 - (py / pixels.height);
@@ -176,9 +173,9 @@ class Player extends FlxSprite
 
     function drawHitbox():Void
     {
-        var r = 5;
-        var cx = hitboxSprite.pixels.width  / 2;
-        var cy = hitboxSprite.pixels.height / 2;
+        var r  = 5.0;
+        var cx = hitboxSprite.pixels.width  / 2.0;
+        var cy = hitboxSprite.pixels.height / 2.0;
         for (px in 0...hitboxSprite.pixels.width)
         {
             for (py in 0...hitboxSprite.pixels.height)
@@ -195,9 +192,9 @@ class Player extends FlxSprite
 
     function drawFocusRing():Void
     {
-        var r  = 14;
-        var cx = focusRing.pixels.width  / 2;
-        var cy = focusRing.pixels.height / 2;
+        var r  = 16.0;
+        var cx = focusRing.pixels.width  / 2.0;
+        var cy = focusRing.pixels.height / 2.0;
         for (px in 0...focusRing.pixels.width)
         {
             for (py in 0...focusRing.pixels.height)
@@ -205,11 +202,10 @@ class Player extends FlxSprite
                 var dx   = px - cx;
                 var dy   = py - cy;
                 var dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist <= r && dist >= r - 2)
+                if (dist <= r && dist >= r - 2.5)
                 {
-                    var a = dist >= r - 0.5 ? 0.5 : 1.0;
-                    var col:FlxColor = FlxColor.fromRGB(180, 220, 255);
-                    col.alphaFloat = a;
+                    var a:Float = dist >= r - 0.5 ? 0.4 : 0.9;
+                    var col = FlxColor.fromRGBFloat(0.7, 0.87, 1.0, a);
                     focusRing.pixels.setPixel32(px, py, col);
                 }
             }
@@ -257,10 +253,8 @@ class PlayState extends FlxState
     // Background
     var starLayers:Array<Array<FlxSprite>> = [];
     var bgScrollSpeeds:Array<Float>        = [15, 35, 65];
-    var bgOverlay:FlxSprite;
 
     // UI
-    var uiPanel:FlxSprite;
     var scoreText:FlxText;
     var livesText:FlxText;
     var bombsText:FlxText;
@@ -269,10 +263,9 @@ class PlayState extends FlxState
     var bossHPBarBG:FlxSprite;
     var bossHPBarGlow:FlxSprite;
     var bossNameText:FlxText;
-    var focusHint:FlxText;
-    var diffText:FlxText;
 
     // Mobile UI
+    #if mobile
     var pauseButton:FlxSprite;
     var joystickBG:FlxSprite;
     var joystickKnob:FlxSprite;
@@ -280,15 +273,19 @@ class PlayState extends FlxState
     var focusButton:FlxSprite;
     var bombButton:FlxSprite;
 
-    var joystickTouchID:Int    = -1;
-    var joystickBaseX:Float    = 0;
-    var joystickBaseY:Float    = 0;
+    var joystickTouchID:Int  = -1;
+    var joystickBaseX:Float  = 0;
+    var joystickBaseY:Float  = 0;
+    var joystickDX:Float     = 0;
+    var joystickDY:Float     = 0;
+
     static final JOYSTICK_RADIUS:Float = 60;
     static final KNOB_RADIUS:Float     = 24;
 
     var mobileShoot:Bool = false;
     var mobileFocus:Bool = false;
     var mobileBomb:Bool  = false;
+    #end
 
     // Score
     var score:Int        = 0;
@@ -296,8 +293,8 @@ class PlayState extends FlxState
     var grazeTimer:Float = 0;
 
     // State
-    var gameOver:Bool    = false;
-    var paused:Bool      = false;
+    var gameOver:Bool     = false;
+    var paused:Bool       = false;
     var bossDefeated:Bool = false;
 
     // Play area
@@ -333,14 +330,12 @@ class PlayState extends FlxState
 
     function createBackground():Void
     {
-        // Fundo gradiente
         var bgBase = new FlxSprite(PLAY_X, PLAY_Y).makeGraphic(Std.int(PLAY_W), Std.int(playH()), FlxColor.fromRGB(2, 2, 18));
         add(bgBase);
 
-        // Camadas de estrelas
         var starColors = [
             [FlxColor.fromRGB(60,  60,  100), FlxColor.fromRGB(40,  40,  80)],
-            [FlxColor.fromRGB(120, 120, 180), FlxColor.fromRGB(80,  80,  140)],
+            [FlxColor.fromRGB(120, 120, 180), FlxColor.fromRGB(80,  80, 140)],
             [FlxColor.fromRGB(220, 220, 255), FlxColor.fromRGB(180, 180, 220)]
         ];
         var starCounts = [100, 60, 30];
@@ -364,16 +359,11 @@ class PlayState extends FlxState
             starLayers.push(stars);
         }
 
-        // Overlay vinheta
-        bgOverlay = new FlxSprite(PLAY_X, PLAY_Y).makeGraphic(Std.int(PLAY_W), Std.int(playH()), FlxColor.TRANSPARENT);
-        add(bgOverlay);
-
-        // Bordas da área de jogo
         var borderColor = FlxColor.fromRGB(40, 40, 80);
-        var bLeft  = new FlxSprite(PLAY_X - 2,          PLAY_Y).makeGraphic(2, Std.int(playH()), borderColor);
-        var bRight = new FlxSprite(PLAY_X + PLAY_W,     PLAY_Y).makeGraphic(2, Std.int(playH()), borderColor);
-        var bTop   = new FlxSprite(PLAY_X,              PLAY_Y - 2).makeGraphic(Std.int(PLAY_W), 2, borderColor);
-        var bBot   = new FlxSprite(PLAY_X,              PLAY_Y + playH()).makeGraphic(Std.int(PLAY_W), 2, borderColor);
+        var bLeft  = new FlxSprite(PLAY_X - 2,      PLAY_Y).makeGraphic(2, Std.int(playH()), borderColor);
+        var bRight = new FlxSprite(PLAY_X + PLAY_W, PLAY_Y).makeGraphic(2, Std.int(playH()), borderColor);
+        var bTop   = new FlxSprite(PLAY_X, PLAY_Y - 2).makeGraphic(Std.int(PLAY_W), 2, borderColor);
+        var bBot   = new FlxSprite(PLAY_X, PLAY_Y + playH()).makeGraphic(Std.int(PLAY_W), 2, borderColor);
         for (b in [bLeft, bRight, bTop, bBot]) add(b);
     }
 
@@ -397,14 +387,12 @@ class PlayState extends FlxState
 
     function createBoss():Void
     {
-        // Glow
         bossGlow = new FlxSprite(0, 0).makeGraphic(80, 80, FlxColor.TRANSPARENT);
         drawBossGlow();
         bossGlow.x = PLAY_X + PLAY_W / 2 - 40;
         bossGlow.y = -100;
         add(bossGlow);
 
-        // Boss sprite
         boss = new FlxSprite(PLAY_X + PLAY_W / 2 - 20, -80);
         boss.makeGraphic(40, 40, FlxColor.TRANSPARENT);
         drawBossSprite();
@@ -416,9 +404,9 @@ class PlayState extends FlxState
 
     function drawBossSprite():Void
     {
-        var cx = boss.pixels.width  / 2;
-        var cy = boss.pixels.height / 2;
-        var r  = 18;
+        var cx = boss.pixels.width  / 2.0;
+        var cy = boss.pixels.height / 2.0;
+        var r  = 18.0;
         for (px in 0...boss.pixels.width)
         {
             for (py in 0...boss.pixels.height)
@@ -430,7 +418,7 @@ class PlayState extends FlxState
                 {
                     var t   = dist / r;
                     var col = FlxColor.interpolate(FlxColor.WHITE, FlxColor.fromRGB(255, 60, 80), t);
-                    col.alphaFloat = 1.0;
+                    col = FlxColor.fromRGBFloat(col.redFloat, col.greenFloat, col.blueFloat, 1.0);
                     boss.pixels.setPixel32(px, py, col);
                 }
             }
@@ -442,9 +430,9 @@ class PlayState extends FlxState
 
     function drawBossGlow():Void
     {
-        var cx = bossGlow.pixels.width  / 2;
-        var cy = bossGlow.pixels.height / 2;
-        var r  = 38;
+        var cx = bossGlow.pixels.width  / 2.0;
+        var cy = bossGlow.pixels.height / 2.0;
+        var r  = 38.0;
         for (px in 0...bossGlow.pixels.width)
         {
             for (py in 0...bossGlow.pixels.height)
@@ -454,9 +442,8 @@ class PlayState extends FlxState
                 var dist = Math.sqrt(dx * dx + dy * dy);
                 if (dist <= r)
                 {
-                    var a:Float = (1 - dist / r) * 0.35;
-                    var col = FlxColor.fromRGB(255, 80, 100);
-                    col.alphaFloat = a;
+                    var a   = (1 - dist / r) * 0.35;
+                    var col = FlxColor.fromRGBFloat(1.0, 0.31, 0.39, a);
                     bossGlow.pixels.setPixel32(px, py, col);
                 }
             }
@@ -468,8 +455,7 @@ class PlayState extends FlxState
 
     function createUI():Void
     {
-        // Painel lateral
-        uiPanel = new FlxSprite(PLAY_X + PLAY_W + 2, 0).makeGraphic(
+        var uiPanel = new FlxSprite(PLAY_X + PLAY_W + 2, 0).makeGraphic(
             Std.int(FlxG.width - PLAY_W - PLAY_X - 2), FlxG.height,
             FlxColor.fromRGB(6, 6, 16)
         );
@@ -478,26 +464,23 @@ class PlayState extends FlxState
         var uiX:Float = PLAY_X + PLAY_W + 14;
         var panelW    = FlxG.width - Std.int(PLAY_W) - Std.int(PLAY_X) - 28;
 
-        // Título do jogo
         var gameTitle = new FlxText(uiX, 14, panelW, "Kareshi Project");
         gameTitle.setFormat(null, 14, FlxColor.fromRGB(160, 160, 220), "center");
         gameTitle.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 1);
         add(gameTitle);
 
-        var divider = new FlxSprite(uiX, 34).makeGraphic(panelW, 1, FlxColor.fromRGB(40, 40, 80));
-        add(divider);
+        var divider1 = new FlxSprite(uiX, 34).makeGraphic(panelW, 1, FlxColor.fromRGB(40, 40, 80));
+        add(divider1);
 
-        // Score
         var scoreLabel = new FlxText(uiX, 44, panelW, "SCORE");
         scoreLabel.setFormat(null, 11, FlxColor.fromRGB(140, 140, 200), "left");
         add(scoreLabel);
 
-        scoreText = new FlxText(uiX, 56, panelW, "0");
+        scoreText = new FlxText(uiX, 56, panelW, "00000000");
         scoreText.setFormat(null, 18, FlxColor.WHITE, "right");
         scoreText.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 2);
         add(scoreText);
 
-        // Vidas
         var livesLabel = new FlxText(uiX, 90, panelW, "LIVES");
         livesLabel.setFormat(null, 11, FlxColor.fromRGB(140, 140, 200), "left");
         add(livesLabel);
@@ -507,7 +490,6 @@ class PlayState extends FlxState
         livesText.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 2);
         add(livesText);
 
-        // Bombas
         var bombsLabel = new FlxText(uiX, 136, panelW, "BOMBS");
         bombsLabel.setFormat(null, 11, FlxColor.fromRGB(140, 140, 200), "left");
         add(bombsLabel);
@@ -517,25 +499,22 @@ class PlayState extends FlxState
         bombsText.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 2);
         add(bombsText);
 
-        // Graze
         var grazeLabel = new FlxText(uiX, 182, panelW, "GRAZE");
         grazeLabel.setFormat(null, 11, FlxColor.fromRGB(140, 140, 200), "left");
         add(grazeLabel);
 
-        grazeText = new FlxText(uiX, 194, panelW, "0");
+        grazeText = new FlxText(uiX, 194, panelW, "0000");
         grazeText.setFormat(null, 16, FlxColor.YELLOW, "right");
         grazeText.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 2);
         add(grazeText);
 
-        // Dificuldade
-        var diff = new FlxSprite(uiX, 230).makeGraphic(panelW, 1, FlxColor.fromRGB(40, 40, 80));
-        add(diff);
+        var divider2 = new FlxSprite(uiX, 224).makeGraphic(panelW, 1, FlxColor.fromRGB(40, 40, 80));
+        add(divider2);
 
-        diffText = new FlxText(uiX, 238, panelW, "EASY");
-        diffText.setFormat(null, 13, FlxColor.fromRGB(100, 255, 120), "center");
-        add(diffText);
+        var diffLabel = new FlxText(uiX, 232, panelW, "EASY");
+        diffLabel.setFormat(null, 13, FlxColor.fromRGB(100, 255, 120), "center");
+        add(diffLabel);
 
-        // HP bar do boss
         bossHPBarBG = new FlxSprite(PLAY_X, PLAY_Y - 14).makeGraphic(Std.int(PLAY_W), 8, FlxColor.fromRGB(30, 30, 30));
         add(bossHPBarBG);
 
@@ -551,9 +530,8 @@ class PlayState extends FlxState
         bossNameText.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 2);
         add(bossNameText);
 
-        // Hint desktop
         #if desktop
-        focusHint = new FlxText(PLAY_X, PLAY_Y + playH() + 4, PLAY_W, "Z: Shoot   X: Bomb   Shift: Focus   ESC: Pause");
+        var focusHint = new FlxText(PLAY_X, PLAY_Y + playH() + 4, PLAY_W, "Z: Shoot   X: Bomb   Shift: Focus   ESC: Pause");
         focusHint.setFormat(null, 11, FlxColor.fromRGBFloat(1, 1, 1, 0.45), "center");
         add(focusHint);
         #end
@@ -564,7 +542,6 @@ class PlayState extends FlxState
     #if mobile
     function createMobileUI():Void
     {
-        // Botão pause (canto superior direito)
         pauseButton = new FlxSprite(FlxG.width - 52, 8);
         pauseButton.loadGraphic("images/mobile/pause.png");
         pauseButton.setGraphicSize(40, 40);
@@ -572,47 +549,41 @@ class PlayState extends FlxState
         pauseButton.scrollFactor.set(0, 0);
         add(pauseButton);
 
-        // Joystick base
         joystickBG = new FlxSprite(0, 0).makeGraphic(
             Std.int(JOYSTICK_RADIUS * 2 + 20),
             Std.int(JOYSTICK_RADIUS * 2 + 20),
             FlxColor.TRANSPARENT
         );
-        drawCircleSprite(joystickBG, JOYSTICK_RADIUS + 10, JOYSTICK_RADIUS, FlxColor.fromRGBFloat(1, 1, 1, 0.15), false);
+        drawCircleOnSprite(joystickBG, JOYSTICK_RADIUS + 10, JOYSTICK_RADIUS, FlxColor.fromRGBFloat(1, 1, 1, 0.15), false);
         joystickBG.scrollFactor.set(0, 0);
         joystickBG.visible = false;
         add(joystickBG);
 
-        // Joystick knob
         joystickKnob = new FlxSprite(0, 0).makeGraphic(
             Std.int(KNOB_RADIUS * 2 + 4),
             Std.int(KNOB_RADIUS * 2 + 4),
             FlxColor.TRANSPARENT
         );
-        drawCircleSprite(joystickKnob, KNOB_RADIUS + 2, KNOB_RADIUS, FlxColor.fromRGBFloat(0.6, 0.8, 1, 0.7), true);
+        drawCircleOnSprite(joystickKnob, KNOB_RADIUS + 2, KNOB_RADIUS, FlxColor.fromRGBFloat(0.6, 0.8, 1.0, 0.7), true);
         joystickKnob.scrollFactor.set(0, 0);
         joystickKnob.visible = false;
         add(joystickKnob);
 
-        // Botão Shoot
-        shootButton = makeMobileButton(FlxG.width - 110, FlxG.height - 80, "SHOT", FlxColor.fromRGB(100, 200, 255));
+        shootButton = makeMobileButton(FlxG.width - 110, FlxG.height - 80,  "SHOT",  FlxColor.fromRGB(100, 200, 255));
+        focusButton = makeMobileButton(FlxG.width - 55,  FlxG.height - 130, "FOCUS", FlxColor.fromRGB(255, 220, 80));
+        bombButton  = makeMobileButton(FlxG.width - 55,  FlxG.height - 55,  "BOMB",  FlxColor.fromRGB(255, 100, 100));
+
         add(shootButton);
-
-        // Botão Focus
-        focusButton = makeMobileButton(FlxG.width - 55, FlxG.height - 130, "FOCUS", FlxColor.fromRGB(255, 220, 80));
         add(focusButton);
-
-        // Botão Bomb
-        bombButton = makeMobileButton(FlxG.width - 55, FlxG.height - 55, "BOMB", FlxColor.fromRGB(255, 100, 100));
         add(bombButton);
     }
 
-    function makeMobileButton(x:Float, y:Float, label:String, col:FlxColor):FlxSprite
+    function makeMobileButton(bx:Float, by:Float, label:String, col:FlxColor):FlxSprite
     {
-        var btn = new FlxSprite(x, y).makeGraphic(48, 48, FlxColor.TRANSPARENT);
-        var r   = 22;
-        var cx  = btn.pixels.width  / 2;
-        var cy  = btn.pixels.height / 2;
+        var btn = new FlxSprite(bx, by).makeGraphic(48, 48, FlxColor.TRANSPARENT);
+        var r   = 22.0;
+        var cx  = btn.pixels.width  / 2.0;
+        var cy  = btn.pixels.height / 2.0;
         for (px in 0...btn.pixels.width)
         {
             for (py in 0...btn.pixels.height)
@@ -622,16 +593,18 @@ class PlayState extends FlxState
                 var dist = Math.sqrt(dx * dx + dy * dy);
                 if (dist <= r)
                 {
-                    var c = FlxColor.interpolate(FlxColor.WHITE, col, dist / r);
-                    c.alphaFloat = dist <= r - 2 ? 0.75 : 0.4;
-                    btn.pixels.setPixel32(px, py, c);
+                    var t   = dist / r;
+                    var rc  = FlxColor.interpolate(FlxColor.WHITE, col, t);
+                    var a   = dist <= r - 2 ? 0.75 : 0.4;
+                    rc = FlxColor.fromRGBFloat(rc.redFloat, rc.greenFloat, rc.blueFloat, a);
+                    btn.pixels.setPixel32(px, py, rc);
                 }
             }
         }
         btn.dirty = true;
         btn.scrollFactor.set(0, 0);
 
-        var txt = new FlxText(x, y + 14, 48, label);
+        var txt = new FlxText(bx, by + 14, 48, label);
         txt.setFormat(null, 10, FlxColor.WHITE, "center");
         txt.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 1);
         txt.scrollFactor.set(0, 0);
@@ -640,8 +613,9 @@ class PlayState extends FlxState
         return btn;
     }
 
-    function drawCircleSprite(sprite:FlxSprite, cx:Float, cy:Float, r:Float, col:FlxColor, filled:Bool):Void
+    function drawCircleOnSprite(sprite:FlxSprite, cx:Float, r:Float, col:FlxColor, filled:Bool):Void
     {
+        var cy = cx;
         for (px in 0...sprite.pixels.width)
         {
             for (py in 0...sprite.pixels.height)
@@ -652,9 +626,8 @@ class PlayState extends FlxState
                 var hit  = filled ? dist <= r : (dist <= r && dist >= r - 3);
                 if (hit)
                 {
-                    var a:Float = filled ? (1 - dist / r) * col.alphaFloat : col.alphaFloat;
-                    var c:FlxColor = col;
-                    c.alphaFloat = a;
+                    var a:Float = filled ? (1.0 - dist / r) * col.alphaFloat : col.alphaFloat;
+                    var c = FlxColor.fromRGBFloat(col.redFloat, col.greenFloat, col.blueFloat, Math.max(0, a));
                     sprite.pixels.setPixel32(px, py, c);
                 }
             }
@@ -671,7 +644,6 @@ class PlayState extends FlxState
 
         if (gameOver || bossDefeated) return;
 
-        // Pause
         #if desktop
         if (controls.justPressed(Action.PAUSE))
         {
@@ -722,8 +694,8 @@ class PlayState extends FlxState
 
     function updateBossGlow(elapsed:Float):Void
     {
-        bossGlow.x = boss.x + boss.width  / 2 - bossGlow.width  / 2;
-        bossGlow.y = boss.y + boss.height / 2 - bossGlow.height / 2;
+        bossGlow.x     = boss.x + boss.width  / 2 - bossGlow.width  / 2;
+        bossGlow.y     = boss.y + boss.height / 2 - bossGlow.height / 2;
         bossGlow.alpha = 0.6 + Math.sin(haxe.Timer.stamp() * 3) * 0.4;
     }
 
@@ -740,7 +712,6 @@ class PlayState extends FlxState
 
         for (touch in FlxG.touches.justStarted())
         {
-            // Pause button
             if (pauseButton.overlapsPoint(touch.getWorldPosition()))
             {
                 paused = true;
@@ -748,31 +719,29 @@ class PlayState extends FlxState
                 return;
             }
 
-            // Joystick inicia no lado esquerdo
             if (touch.screenX < leftHalf)
             {
-                joystickTouchID = touch.touchPointID;
-                joystickBaseX   = touch.screenX;
-                joystickBaseY   = touch.screenY;
-                joystickBG.x    = joystickBaseX - JOYSTICK_RADIUS - 10;
-                joystickBG.y    = joystickBaseY - JOYSTICK_RADIUS - 10;
-                joystickKnob.x  = joystickBaseX - KNOB_RADIUS - 2;
-                joystickKnob.y  = joystickBaseY - KNOB_RADIUS - 2;
-                joystickBG.visible  = true;
+                joystickTouchID  = touch.touchPointID;
+                joystickBaseX    = touch.screenX;
+                joystickBaseY    = touch.screenY;
+                joystickBG.x     = joystickBaseX - JOYSTICK_RADIUS - 10;
+                joystickBG.y     = joystickBaseY - JOYSTICK_RADIUS - 10;
+                joystickKnob.x   = joystickBaseX - KNOB_RADIUS - 2;
+                joystickKnob.y   = joystickBaseY - KNOB_RADIUS - 2;
+                joystickBG.visible   = true;
                 joystickKnob.visible = true;
             }
         }
 
-        // Movimento do joystick
-        var joyX:Float = 0;
-        var joyY:Float = 0;
+        joystickDX = 0;
+        joystickDY = 0;
 
         for (touch in FlxG.touches.list)
         {
             if (touch.touchPointID == joystickTouchID)
             {
-                var dx = touch.screenX - joystickBaseX;
-                var dy = touch.screenY - joystickBaseY;
+                var dx   = touch.screenX - joystickBaseX;
+                var dy   = touch.screenY - joystickBaseY;
                 var dist = Math.sqrt(dx * dx + dy * dy);
 
                 if (dist > JOYSTICK_RADIUS)
@@ -781,47 +750,44 @@ class PlayState extends FlxState
                     dy = dy / dist * JOYSTICK_RADIUS;
                 }
 
-                joyX = dx / JOYSTICK_RADIUS;
-                joyY = dy / JOYSTICK_RADIUS;
+                joystickDX = dx / JOYSTICK_RADIUS;
+                joystickDY = dy / JOYSTICK_RADIUS;
 
                 joystickKnob.x = joystickBaseX + dx - KNOB_RADIUS - 2;
                 joystickKnob.y = joystickBaseY + dy - KNOB_RADIUS - 2;
             }
 
-            // Botões do lado direito
             if (shootButton.overlapsPoint(touch.getWorldPosition())) mobileShoot = true;
             if (focusButton.overlapsPoint(touch.getWorldPosition())) mobileFocus = true;
             if (bombButton.overlapsPoint(touch.getWorldPosition()))  mobileBomb  = true;
         }
 
-        // Joystick released
         for (touch in FlxG.touches.justReleased())
         {
             if (touch.touchPointID == joystickTouchID)
             {
-                joystickTouchID = -1;
+                joystickTouchID      = -1;
+                joystickDX           = 0;
+                joystickDY           = 0;
                 joystickBG.visible   = false;
                 joystickKnob.visible = false;
-                joyX = 0;
-                joyY = 0;
             }
         }
 
-        // Aplica movimento do joystick ao player
         var spd = mobileFocus ? player.focusSpeed : player.moveSpeed;
-        player.velocity.set(joyX * spd, joyY * spd);
+        player.velocity.set(joystickDX * spd, joystickDY * spd);
 
         player.x = Math.max(PLAY_X, Math.min(PLAY_X + PLAY_W - player.width,  player.x));
         player.y = Math.max(PLAY_Y, Math.min(PLAY_Y + playH() - player.height, player.y));
 
-        // Anel de foco
-        player.focusRing.exists  = mobileFocus;
+        player.focusRing.exists    = mobileFocus;
         player.hitboxSprite.exists = mobileFocus;
         if (mobileFocus)
         {
+            player.focusRing.exists = true;
+            player.focusRing.angle += 90 * elapsed;
             player.focusRing.x = player.x + (player.width  - player.focusRing.width)  / 2;
             player.focusRing.y = player.y + (player.height - player.focusRing.height) / 2;
-            player.focusRing.angle += 60 * (1 / 60);
 
             player.hitboxSprite.x = player.x + (player.width  - player.hitboxSprite.width)  / 2;
             player.hitboxSprite.y = player.y + (player.height - player.hitboxSprite.height) / 2;
@@ -833,9 +799,7 @@ class PlayState extends FlxState
 
     function handlePlayerMovement(elapsed:Float):Void
     {
-        #if mobile
-        // Movimento já tratado em handleMobileInput
-        #else
+        #if !mobile
         var isFocused = controls.pressed(Action.FOCUS);
         var spd       = isFocused ? player.focusSpeed : player.moveSpeed;
         var move      = controls.getMovement();
@@ -850,10 +814,9 @@ class PlayState extends FlxState
 
         if (isFocused)
         {
-            player.focusRing.exists = true;
+            player.focusRing.angle += 90 * elapsed;
             player.focusRing.x = player.x + (player.width  - player.focusRing.width)  / 2;
             player.focusRing.y = player.y + (player.height - player.focusRing.height) / 2;
-            player.focusRing.angle += 90 * elapsed;
 
             player.hitboxSprite.x = player.x + (player.width  - player.hitboxSprite.width)  / 2;
             player.hitboxSprite.y = player.y + (player.height - player.hitboxSprite.height) / 2;
@@ -867,12 +830,12 @@ class PlayState extends FlxState
     {
         player.shootCooldown -= elapsed;
 
-        #if desktop
-        var shooting  = controls.pressed(Action.SHOOT);
-        var isFocused = controls.pressed(Action.FOCUS);
-        #else
+        #if mobile
         var shooting  = mobileShoot;
         var isFocused = mobileFocus;
+        #else
+        var shooting  = controls.pressed(Action.SHOOT);
+        var isFocused = controls.pressed(Action.FOCUS);
         #end
 
         if (shooting && player.shootCooldown <= 0)
@@ -884,19 +847,17 @@ class PlayState extends FlxState
 
             if (isFocused)
             {
-                // Tiro concentrado: 3 balas centrais mais fortes
                 playerBullets.fire(bx,     by, -90, 650, FlxColor.fromRGB(220, 255, 255), true, 4);
                 playerBullets.fire(bx - 4, by, -90, 640, FlxColor.fromRGB(180, 230, 255), true, 3);
                 playerBullets.fire(bx + 4, by, -90, 640, FlxColor.fromRGB(180, 230, 255), true, 3);
             }
             else
             {
-                // Tiro espalhado: 5 balas em leque
-                playerBullets.fire(bx,      by, -90,  560, FlxColor.fromRGB(100, 220, 255), true, 4);
-                playerBullets.fire(bx - 10, by, -93,  540, FlxColor.fromRGB(80,  200, 255), true, 3);
-                playerBullets.fire(bx + 10, by, -87,  540, FlxColor.fromRGB(80,  200, 255), true, 3);
-                playerBullets.fire(bx - 22, by, -98,  510, FlxColor.fromRGB(60,  180, 255), true, 3);
-                playerBullets.fire(bx + 22, by, -82,  510, FlxColor.fromRGB(60,  180, 255), true, 3);
+                playerBullets.fire(bx,      by, -90, 560, FlxColor.fromRGB(100, 220, 255), true, 4);
+                playerBullets.fire(bx - 10, by, -93, 540, FlxColor.fromRGB(80,  200, 255), true, 3);
+                playerBullets.fire(bx + 10, by, -87, 540, FlxColor.fromRGB(80,  200, 255), true, 3);
+                playerBullets.fire(bx - 22, by, -98, 510, FlxColor.fromRGB(60,  180, 255), true, 3);
+                playerBullets.fire(bx + 22, by, -82, 510, FlxColor.fromRGB(60,  180, 255), true, 3);
             }
         }
     }
@@ -918,7 +879,6 @@ class PlayState extends FlxState
             bossWaveAngle    = 0;
         }
 
-        // Fase 2 quando HP < 50%
         if (bossHP <= bossHPMax * 0.5 && bossPhase == 0)
         {
             bossPhase = 1;
@@ -927,8 +887,8 @@ class PlayState extends FlxState
         }
 
         bossFireTimer += elapsed;
-        var baseRate:Float  = bossPhase == 0 ? 0.10 : 0.07;
-        var fireRate:Float  = baseRate - (1 - bossHP / bossHPMax) * 0.04;
+        var baseRate:Float = bossPhase == 0 ? 0.10 : 0.07;
+        var fireRate:Float = baseRate - (1 - bossHP / bossHPMax) * 0.04;
 
         if (bossFireTimer >= fireRate)
         {
@@ -939,24 +899,22 @@ class PlayState extends FlxState
 
     function fireBossPattern():Void
     {
-        var cx = boss.x + boss.width  / 2;
-        var cy = boss.y + boss.height / 2;
+        var cx     = boss.x + boss.width  / 2;
+        var cy     = boss.y + boss.height / 2;
         var phase2 = bossPhase == 1;
 
         switch (bossPattern)
         {
-            // Círculo pulsante
             case 0:
                 var count = phase2 ? 20 : 14;
                 for (i in 0...count)
                 {
-                    var a = (360 / count) * i + bossWaveAngle;
+                    var a   = (360 / count) * i + bossWaveAngle;
                     var spd = phase2 ? 160 : 130;
                     enemyBullets.fire(cx, cy, a, spd, FlxColor.fromRGB(255, 80, 100), false, 5);
                 }
                 bossWaveAngle += phase2 ? 7 : 5;
 
-            // Espiral tripla
             case 1:
                 var arms = phase2 ? 3 : 2;
                 for (k in 0...arms)
@@ -968,7 +926,6 @@ class PlayState extends FlxState
                 }
                 bossWaveAngle += phase2 ? 10 : 8;
 
-            // Leque direcionado ao player
             case 2:
                 var toPlayer = FlxAngle.angleBetween(boss, player, true);
                 var spread   = phase2 ? 50 : 38;
@@ -979,7 +936,6 @@ class PlayState extends FlxState
                     enemyBullets.fire(cx, cy, a, phase2 ? 220 : 190, FlxColor.fromRGB(200, 80, 255), false, 4);
                 }
 
-            // Anel lento denso
             case 3:
                 var count = phase2 ? 32 : 24;
                 for (i in 0...count)
@@ -989,7 +945,6 @@ class PlayState extends FlxState
                 }
                 bossWaveAngle += phase2 ? 4 : 3;
 
-            // Fase 2 exclusivo: chuva de balas
             case 4:
                 for (_ in 0...6)
                 {
@@ -1007,7 +962,7 @@ class PlayState extends FlxState
         {
             var bullet:Bullet = cast b;
             bullet.kill();
-            bossHP -= phase2Multiplier();
+            bossHP -= bossPhase == 0 ? 1 : 1.5;
             score  += 10;
             if (bossHP <= 0) triggerBossDeath();
         });
@@ -1027,11 +982,6 @@ class PlayState extends FlxState
                 if (dead) triggerGameOver();
             });
         }
-    }
-
-    function phase2Multiplier():Float
-    {
-        return bossPhase == 0 ? 1 : 1.5;
     }
 
     // ==================== Graze ====================
@@ -1059,7 +1009,7 @@ class PlayState extends FlxState
                     grazeTimer = 0.4;
                     FlxTween.cancelTweensOf(grazeText);
                     grazeText.alpha = 1;
-                    FlxTween.tween(grazeText, {alpha: 0}, 0.4, {ease: FlxEase.quartIn});
+                    FlxTween.tween(grazeText, {alpha: 0.3}, 0.4, {ease: FlxEase.quartIn});
                 }
             }
         }
@@ -1069,7 +1019,7 @@ class PlayState extends FlxState
 
     function updateUI():Void
     {
-        scoreText.text = Std.string(score).lpad("0", 8);
+        scoreText.text = StringTools.lpad(Std.string(score), "0", 8);
 
         var livesStr = "";
         for (_ in 0...player.lives) livesStr += "♥ ";
@@ -1079,15 +1029,14 @@ class PlayState extends FlxState
         for (_ in 0...player.bombs) bombsStr += "✦ ";
         bombsText.text = bombsStr == "" ? "—" : bombsStr;
 
-        grazeText.text = Std.string(graze).lpad("0", 4);
+        grazeText.text = StringTools.lpad(Std.string(graze), "0", 4);
 
         var ratio = Math.max(0, bossHP / bossHPMax);
-        bossHPBar.scale.x      = ratio;
-        bossHPBarGlow.scale.x  = ratio;
-        bossHPBar.x            = PLAY_X;
-        bossHPBarGlow.x        = PLAY_X;
+        bossHPBar.scale.x     = ratio;
+        bossHPBarGlow.scale.x = ratio;
+        bossHPBar.x           = PLAY_X;
+        bossHPBarGlow.x       = PLAY_X;
 
-        // Cor da barra por fase
         bossHPBar.color = bossPhase == 0
             ? FlxColor.fromRGB(220, 60,  80)
             : FlxColor.fromRGB(255, 140, 40);
@@ -1097,10 +1046,10 @@ class PlayState extends FlxState
 
     function triggerBossDeath():Void
     {
-        bossDefeated = true;
-        boss.exists      = false;
-        bossGlow.exists  = false;
-        score           += 50000;
+        bossDefeated    = true;
+        boss.exists     = false;
+        bossGlow.exists = false;
+        score          += 50000;
 
         #if desktop
         discord.Discord.setStageClear(score);
@@ -1119,7 +1068,9 @@ class PlayState extends FlxState
         add(bonusText);
 
         FlxTween.tween(clear,     {alpha: 1}, 0.6, {ease: FlxEase.quartOut});
-        FlxTween.tween(bonusText, {alpha: 1}, 0.6, {ease: FlxEase.quartOut, startDelay: 0.3,
+        FlxTween.tween(bonusText, {alpha: 1}, 0.6, {
+            ease: FlxEase.quartOut,
+            startDelay: 0.3,
             onComplete: function(_)
             {
                 new FlxTimer().start(3, function(_)
@@ -1151,7 +1102,9 @@ class PlayState extends FlxState
         add(scoreOver);
 
         FlxTween.tween(over,      {alpha: 1}, 0.6, {ease: FlxEase.quartOut});
-        FlxTween.tween(scoreOver, {alpha: 1}, 0.6, {ease: FlxEase.quartOut, startDelay: 0.3,
+        FlxTween.tween(scoreOver, {alpha: 1}, 0.6, {
+            ease: FlxEase.quartOut,
+            startDelay: 0.3,
             onComplete: function(_)
             {
                 new FlxTimer().start(3, function(_)
