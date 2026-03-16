@@ -1,0 +1,406 @@
+{
+  "id": "stage_01",
+  "name": "Scarlet Boundary",
+  "subtitle": "Where the Crimson Mist Begins",
+  "difficulty": "easy",
+  "order": 1,
+  "unlock": {
+    "unlocked": true,
+    "condition": ""
+  },
+
+  "music": {
+    "bgm":         "music/stage01.ogg",
+    "bossTheme":   "music/stage01_boss.ogg",
+    "clearJingle": "music/stage_clear.ogg",
+    "gameOver":    "music/game_over.ogg"
+  },
+
+  "background": {
+    "type": "scrolling_stars",
+    "layers": [
+      {
+        "id": "sky",
+        "image": "images/stages/stage01/bg_sky.png",
+        "scrollSpeedX": 0,
+        "scrollSpeedY": 0,
+        "alpha": 1.0,
+        "depth": 0
+      },
+      {
+        "id": "clouds_far",
+        "image": "images/stages/stage01/bg_clouds_far.png",
+        "scrollSpeedX": 0,
+        "scrollSpeedY": 15,
+        "alpha": 0.6,
+        "depth": 1
+      },
+      {
+        "id": "clouds_near",
+        "image": "images/stages/stage01/bg_clouds_near.png",
+        "scrollSpeedX": 0,
+        "scrollSpeedY": 35,
+        "alpha": 0.85,
+        "depth": 2
+      },
+      {
+        "id": "stars_far",
+        "type": "generated",
+        "count": 100,
+        "scrollSpeedY": 15,
+        "sizeMin": 1,
+        "sizeMax": 1,
+        "colorMin": "#3C3C64",
+        "colorMax": "#28284F",
+        "alphaMin": 0.3,
+        "alphaMax": 0.7,
+        "depth": 3
+      },
+      {
+        "id": "stars_mid",
+        "type": "generated",
+        "count": 60,
+        "scrollSpeedY": 35,
+        "sizeMin": 2,
+        "sizeMax": 2,
+        "colorMin": "#7878B4",
+        "colorMax": "#50508C",
+        "alphaMin": 0.4,
+        "alphaMax": 0.9,
+        "depth": 4
+      },
+      {
+        "id": "stars_near",
+        "type": "generated",
+        "count": 30,
+        "scrollSpeedY": 65,
+        "sizeMin": 3,
+        "sizeMax": 3,
+        "colorMin": "#DCDCFF",
+        "colorMax": "#B4B4DC",
+        "alphaMin": 0.6,
+        "alphaMax": 1.0,
+        "depth": 5
+      }
+    ],
+    "fogColor": "#0A0A1E",
+    "bgColor":  "#020212"
+  },
+
+  "playArea": {
+    "x": 32,
+    "y": 16,
+    "width": 448,
+    "height": 688,
+    "borderColor": "#28285A"
+  },
+
+  "player": {
+    "startX": 224,
+    "startY": 620,
+    "allowedCharacters": ["reimu_kareshi"]
+  },
+
+  "waves": [
+    {
+      "id": "wave_01",
+      "triggerTime": 2.0,
+      "enemies": [
+        {
+          "type": "fairy_small",
+          "spawnX": 80,
+          "spawnY": -20,
+          "movePattern": "straight_down",
+          "shotPattern": "single_aimed",
+          "hp": 8,
+          "score": 100,
+          "dropItem": "point",
+          "count": 3,
+          "spawnInterval": 0.4
+        }
+      ]
+    },
+    {
+      "id": "wave_02",
+      "triggerTime": 5.0,
+      "enemies": [
+        {
+          "type": "fairy_small",
+          "spawnX": 320,
+          "spawnY": -20,
+          "movePattern": "straight_down",
+          "shotPattern": "spread_2way",
+          "hp": 8,
+          "score": 100,
+          "dropItem": "point",
+          "count": 3,
+          "spawnInterval": 0.4
+        }
+      ]
+    },
+    {
+      "id": "wave_03",
+      "triggerTime": 8.5,
+      "enemies": [
+        {
+          "type": "fairy_medium",
+          "spawnX": 100,
+          "spawnY": -20,
+          "movePattern": "sine_horizontal",
+          "shotPattern": "circle_8way",
+          "hp": 24,
+          "score": 300,
+          "dropItem": "power",
+          "count": 2,
+          "spawnInterval": 1.0
+        },
+        {
+          "type": "fairy_small",
+          "spawnX": 200,
+          "spawnY": -20,
+          "movePattern": "straight_down",
+          "shotPattern": "single_aimed",
+          "hp": 8,
+          "score": 100,
+          "dropItem": "point",
+          "count": 4,
+          "spawnInterval": 0.3
+        }
+      ]
+    },
+    {
+      "id": "wave_04",
+      "triggerTime": 14.0,
+      "enemies": [
+        {
+          "type": "fairy_medium",
+          "spawnX": 50,
+          "spawnY": -20,
+          "movePattern": "arc_right",
+          "shotPattern": "spread_3way",
+          "hp": 20,
+          "score": 250,
+          "dropItem": "bomb",
+          "count": 1,
+          "spawnInterval": 0
+        },
+        {
+          "type": "fairy_medium",
+          "spawnX": 380,
+          "spawnY": -20,
+          "movePattern": "arc_left",
+          "shotPattern": "spread_3way",
+          "hp": 20,
+          "score": 250,
+          "dropItem": "bomb",
+          "count": 1,
+          "spawnInterval": 0
+        }
+      ]
+    },
+    {
+      "id": "wave_05",
+      "triggerTime": 20.0,
+      "enemies": [
+        {
+          "type": "fairy_large",
+          "spawnX": 200,
+          "spawnY": -20,
+          "movePattern": "pendulum",
+          "shotPattern": "circle_16way",
+          "hp": 60,
+          "score": 800,
+          "dropItem": "life_fragment",
+          "count": 1,
+          "spawnInterval": 0
+        }
+      ]
+    }
+  ],
+
+  "midBoss": {
+    "triggerTime": 28.0,
+    "id": "mid_crimson_fairy",
+    "name": "Crimson Gate Fairy",
+    "hp": 300,
+    "hpMax": 300,
+    "score": 5000,
+    "spawnX": 224,
+    "spawnY": -40,
+    "movePattern": "side_to_side",
+    "phases": [
+      {
+        "id": "phase_1",
+        "hpThreshold": 1.0,
+        "shotPattern": "spiral_double",
+        "fireRate": 0.12,
+        "bulletSpeed": 130,
+        "bulletColor": "#FF5064",
+        "bulletRadius": 5
+      },
+      {
+        "id": "phase_2",
+        "hpThreshold": 0.5,
+        "shotPattern": "aimed_fan_5way",
+        "fireRate": 0.09,
+        "bulletSpeed": 160,
+        "bulletColor": "#FF8050",
+        "bulletRadius": 4
+      }
+    ],
+    "dropItems": ["power", "point", "point", "point"]
+  },
+
+  "boss": {
+    "triggerTime": 60.0,
+    "id": "boss_scarlet_witch",
+    "name": "Scarlet Witch",
+    "title": "Keeper of the Crimson Boundary",
+    "hp": 1000,
+    "hpMax": 1000,
+    "score": 50000,
+    "spawnX": 224,
+    "spawnY": -60,
+    "entranceDuration": 1.8,
+    "targetY": 96,
+    "portrait": "images/characters/boss_scarlet_witch_portrait.png",
+    "sprite": "images/characters/boss_scarlet_witch.png",
+    "color": "#FF3C50",
+    "glowColor": "#FF1428",
+    "phases": [
+      {
+        "id": "phase_1",
+        "name": "Crimson Waltz",
+        "hpThreshold": 1.0,
+        "duration": 7.0,
+        "patterns": [
+          {
+            "id": "circle_burst",
+            "bulletCount": 14,
+            "bulletSpeed": 130,
+            "bulletColor": "#FF5064",
+            "bulletRadius": 5,
+            "rotationSpeed": 5
+          },
+          {
+            "id": "spiral_double",
+            "arms": 2,
+            "bulletSpeed": 180,
+            "bulletColor": "#FFB432",
+            "bulletRadius": 4,
+            "rotationSpeed": 8
+          },
+          {
+            "id": "aimed_fan",
+            "bulletCount": 7,
+            "spread": 38,
+            "bulletSpeed": 190,
+            "bulletColor": "#C850FF",
+            "bulletRadius": 4
+          },
+          {
+            "id": "slow_ring",
+            "bulletCount": 24,
+            "bulletSpeed": 85,
+            "bulletColor": "#50C8FF",
+            "bulletRadius": 6,
+            "rotationSpeed": 3
+          }
+        ],
+        "movePattern": "sine_wide",
+        "moveSpeed": 55
+      },
+      {
+        "id": "phase_2",
+        "name": "Scarlet Tempest",
+        "hpThreshold": 0.5,
+        "duration": 5.0,
+        "patterns": [
+          {
+            "id": "circle_burst_dense",
+            "bulletCount": 20,
+            "bulletSpeed": 160,
+            "bulletColor": "#FF5064",
+            "bulletRadius": 5,
+            "rotationSpeed": 7
+          },
+          {
+            "id": "spiral_triple",
+            "arms": 3,
+            "bulletSpeed": 200,
+            "bulletColor": "#FFB432",
+            "bulletRadius": 4,
+            "rotationSpeed": 10
+          },
+          {
+            "id": "aimed_fan_wide",
+            "bulletCount": 9,
+            "spread": 50,
+            "bulletSpeed": 220,
+            "bulletColor": "#C850FF",
+            "bulletRadius": 4
+          },
+          {
+            "id": "slow_ring_dense",
+            "bulletCount": 32,
+            "bulletSpeed": 110,
+            "bulletColor": "#50C8FF",
+            "bulletRadius": 6,
+            "rotationSpeed": 4
+          },
+          {
+            "id": "rain",
+            "bulletCount": 6,
+            "speedMin": 120,
+            "speedMax": 180,
+            "bulletColor": "#FFDC64",
+            "bulletRadius": 4
+          }
+        ],
+        "movePattern": "pendulum_fast",
+        "moveSpeed": 80
+      }
+    ],
+    "dropItems": ["life", "bomb", "bomb"],
+    "clearBonus": 50000,
+    "dialogue": {
+      "intro": [
+        { "speaker": "Scarlet Witch", "text": "So you made it this far..." },
+        { "speaker": "Scarlet Witch", "text": "Very well. I shall test your resolve personally." }
+      ],
+      "phase2": [
+        { "speaker": "Scarlet Witch", "text": "Impressive. But this ends NOW." }
+      ],
+      "defeat": [
+        { "speaker": "Scarlet Witch", "text": "...Unbelievable. You actually did it." },
+        { "speaker": "Scarlet Witch", "text": "The boundary remains yours to cross." }
+      ]
+    }
+  },
+
+  "items": {
+    "point":        { "image": "images/items/point.png",        "value": 10,   "collectRadius": 32 },
+    "power":        { "image": "images/items/power.png",        "value": 0.1,  "collectRadius": 32 },
+    "bomb":         { "image": "images/items/bomb.png",         "value": 1,    "collectRadius": 32 },
+    "life_fragment": { "image": "images/items/life_fragment.png", "value": 0.33, "collectRadius": 40 },
+    "life":         { "image": "images/items/life.png",         "value": 1,    "collectRadius": 40 }
+  },
+
+  "scoring": {
+    "graze":          3,
+    "enemyKill":      100,
+    "midBossClear":   5000,
+    "bossClear":      50000,
+    "livesRemaining": 10000,
+    "bombsRemaining": 3000,
+    "noMiss":         20000,
+    "noBomb":         10000
+  },
+
+  "lore": {
+    "intro":   "A crimson mist drifts from beyond the scarlet boundary. Something stirs within.",
+    "midBoss": "A lone fairy stands guard — her wings tinged with the mist's eerie glow.",
+    "boss":    "At the heart of the boundary stands the Scarlet Witch, her power boundless.",
+    "clear":   "The mist begins to fade. But the boundary still holds its secrets."
+  }
+}
