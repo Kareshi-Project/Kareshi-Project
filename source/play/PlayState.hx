@@ -715,7 +715,7 @@ class PlayState extends FlxState
         handleGraze(elapsed);
         updateUI();
 
-        #if debug
+        #if (debug && desktop)
         if (FlxG.keys.justPressed.F2)
             debugDisplay.toggle();
         #end
