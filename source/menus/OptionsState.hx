@@ -7,7 +7,6 @@ import flixel.text.FlxText;
 import flixel.util.FlxColor;
 import flixel.tweens.FlxTween;
 import flixel.tweens.FlxEase;
-import flixel.input.touch.FlxTouch;
 import backend.debug.DebugDisplay;
 
 class OptionsState extends FlxState
@@ -43,20 +42,21 @@ class OptionsState extends FlxState
     var arrowRight:Array<FlxText>  = [];
     var valueTexts:Array<FlxText>  = [];
     var cursor:FlxSprite;
+    var hintText:FlxText;
 
     var curSelected:Int = 0;
     var canInput:Bool   = false;
 
     // ==================== Valores ====================
 
-    var masterVolume:Int  = 10;
-    var musicVolume:Int   = 10;
-    var sfxVolume:Int     = 10;
-    var fullscreen:Bool   = false;
-    var showFPS:Bool      = false;
+    var masterVolume:Int = 10;
+    var musicVolume:Int  = 10;
+    var sfxVolume:Int    = 10;
+    var fullscreen:Bool  = false;
+    var showFPS:Bool     = false;
 
     #if desktop
-    var discordRPC:Bool   = true;
+    var discordRPC:Bool  = true;
     #end
 
     // ==================== Debug ====================
@@ -67,11 +67,18 @@ class OptionsState extends FlxState
 
     // ==================== Mobile Touch ====================
 
-    var touchStartX:Float = 0;
-    var touchStartY:Float = 0;
-    var touchMoved:Bool   = false;
-    static final SWIPE_THRESHOLD:Float = 40;
-    static final TAP_THRESHOLD:Float   = 10;
+    var touchStartX:Float  = 0;
+    var touchStartY:Float  = 0;
+    var touchMoved:Bool    = false;
+    var lastSwipeTime:Float = 0;
+    static final SWIPE_THRESHOLD:Float  = 35;
+    static final TAP_THRESHOLD:Float    = 12;
+    static final SWIPE_COOLDOWN:Float   = 0.18;
+
+    // ==================== Input cooldown ====================
+
+    var inputCooldown:Float = 0;
+    static final INPUT_COOLDOWN:Float = 0.12;
 
     // ==================== Create ====================
 
@@ -88,7 +95,7 @@ class OptionsState extends FlxState
         add(bg);
 
         // Overlay
-        overlay = new FlxSprite(0, 0).makeGraphic(FlxG.width, FlxG.height, FlxColor.fromRGBFloat(0, 0, 0, 0.55));
+        overlay = new FlxSprite(0, 0).makeGraphic(FlxG.width, FlxG.height, FlxColor.fromRGBFloat(0, 0, 0, 0.58));
         overlay.alpha = 0;
         add(overlay);
 
@@ -105,7 +112,7 @@ class OptionsState extends FlxState
         add(separator);
 
         // Cursor
-        cursor = new FlxSprite(0, 0).makeGraphic(8, 36, FlxColor.YELLOW);
+        cursor = new FlxSprite(0, 0).makeGraphic(6, 34, FlxColor.YELLOW);
         cursor.alpha = 0;
         add(cursor);
 
@@ -143,16 +150,29 @@ class OptionsState extends FlxState
             arrowRight.push(right);
         }
 
+        // Hint
+        hintText = new FlxText(0, FlxG.height - 28, FlxG.width, "");
+        hintText.setFormat(null, 14, FlxColor.fromRGBFloat(1, 1, 1, 0.5), "center");
+        hintText.alpha = 0;
+        add(hintText);
+
+        #if desktop
+        hintText.text = "↑↓ Navigate   ←→ Change   Enter/Z Confirm   Esc/X Back   F2 Debug";
+        #end
+        #if mobile
+        hintText.text = "Swipe ↑↓ to navigate   Swipe ←→ to change   Tap to confirm";
+        #end
+
         refreshValues();
         updateSelection();
 
-        // Debug display
+        // DebugDisplay no canto superior esquerdo (igual Main.hx)
         #if debug
-        debugDisplay = new DebugDisplay(FlxG.width - 188, 4);
+        debugDisplay = new DebugDisplay(4, 4);
         add(debugDisplay);
         #end
 
-        // Discord presence
+        // Discord
         #if desktop
         discord.Discord.setInOptions();
         #end
@@ -163,6 +183,7 @@ class OptionsState extends FlxState
         FlxTween.tween(titleText, {alpha: 1}, 0.5, {ease: FlxEase.quartOut});
         FlxTween.tween(separator, {alpha: 1}, 0.5, {ease: FlxEase.quartOut, startDelay: 0.1});
         FlxTween.tween(cursor,    {alpha: 1}, 0.4, {ease: FlxEase.quartOut, startDelay: 0.2});
+        FlxTween.tween(hintText,  {alpha: 1}, 0.4, {ease: FlxEase.quartOut, startDelay: 0.3});
 
         for (i in 0...OPTIONS.length)
         {
@@ -186,36 +207,54 @@ class OptionsState extends FlxState
 
         if (!canInput) return;
 
+        inputCooldown -= elapsed;
+
+        // Cursor pisca
         cursor.alpha = 0.5 + Math.sin(haxe.Timer.stamp() * 6) * 0.5;
 
         #if desktop
-        handleKeyboard();
+        handleKeyboard(elapsed);
         #end
 
         #if mobile
-        handleTouch();
+        handleTouch(elapsed);
         #end
     }
 
     // ==================== Keyboard ====================
 
     #if desktop
-    function handleKeyboard():Void
+    function handleKeyboard(elapsed:Float):Void
     {
-        if (FlxG.keys.justPressed.UP)
+        // Navegação com cooldown para segurar tecla
+        if (FlxG.keys.justPressed.UP || (FlxG.keys.pressed.UP && inputCooldown <= 0))
+        {
             changeSelection(-1);
-        else if (FlxG.keys.justPressed.DOWN)
+            inputCooldown = FlxG.keys.justPressed.UP ? 0 : INPUT_COOLDOWN;
+        }
+        else if (FlxG.keys.justPressed.DOWN || (FlxG.keys.pressed.DOWN && inputCooldown <= 0))
+        {
             changeSelection(1);
-        else if (FlxG.keys.justPressed.LEFT)
+            inputCooldown = FlxG.keys.justPressed.DOWN ? 0 : INPUT_COOLDOWN;
+        }
+        else if (FlxG.keys.justPressed.LEFT || (FlxG.keys.pressed.LEFT && inputCooldown <= 0))
+        {
             changeValue(-1);
-        else if (FlxG.keys.justPressed.RIGHT)
+            inputCooldown = FlxG.keys.justPressed.LEFT ? 0 : INPUT_COOLDOWN;
+        }
+        else if (FlxG.keys.justPressed.RIGHT || (FlxG.keys.pressed.RIGHT && inputCooldown <= 0))
+        {
             changeValue(1);
-        else if (FlxG.keys.justPressed.ENTER || FlxG.keys.justPressed.Z)
+            inputCooldown = FlxG.keys.justPressed.RIGHT ? 0 : INPUT_COOLDOWN;
+        }
+
+        if (FlxG.keys.justPressed.ENTER || FlxG.keys.justPressed.Z)
             confirmSelection();
-        else if (FlxG.keys.justPressed.ESCAPE || FlxG.keys.justPressed.X)
+
+        if (FlxG.keys.justPressed.ESCAPE || FlxG.keys.justPressed.X)
             goBack();
 
-        // Toggle debug com F2
+        // Toggle DebugDisplay com F2
         #if debug
         if (FlxG.keys.justPressed.F2)
             debugDisplay.toggle();
@@ -226,8 +265,10 @@ class OptionsState extends FlxState
     // ==================== Touch ====================
 
     #if mobile
-    function handleTouch():Void
+    function handleTouch(elapsed:Float):Void
     {
+        lastSwipeTime -= elapsed;
+
         for (touch in FlxG.touches.justStarted())
         {
             touchStartX = touch.screenX;
@@ -240,19 +281,23 @@ class OptionsState extends FlxState
             var dx = touch.screenX - touchStartX;
             var dy = touch.screenY - touchStartY;
 
-            if (!touchMoved)
+            if (!touchMoved && lastSwipeTime <= 0)
             {
-                if (Math.abs(dy) > SWIPE_THRESHOLD)
+                if (Math.abs(dy) > SWIPE_THRESHOLD && Math.abs(dy) > Math.abs(dx))
                 {
-                    touchMoved = true;
+                    touchMoved    = true;
+                    lastSwipeTime = SWIPE_COOLDOWN;
                     changeSelection(dy > 0 ? 1 : -1);
+                    touchStartX = touch.screenX;
                     touchStartY = touch.screenY;
                 }
-                else if (Math.abs(dx) > SWIPE_THRESHOLD)
+                else if (Math.abs(dx) > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy))
                 {
-                    touchMoved = true;
+                    touchMoved    = true;
+                    lastSwipeTime = SWIPE_COOLDOWN;
                     changeValue(dx > 0 ? 1 : -1);
                     touchStartX = touch.screenX;
+                    touchStartY = touch.screenY;
                 }
             }
         }
@@ -281,7 +326,7 @@ class OptionsState extends FlxState
                     }
                 }
 
-                if (!tapped)
+                if (!tapped && curSelected < OPTIONS.length - 1)
                 {
                     if (arrowLeft[curSelected].overlapsPoint(touch.getWorldPosition()))
                         changeValue(-1);
@@ -289,6 +334,8 @@ class OptionsState extends FlxState
                         changeValue(1);
                 }
             }
+
+            touchMoved = false;
         }
     }
     #end
@@ -342,24 +389,37 @@ class OptionsState extends FlxState
         }
 
         var sel = optionTexts[curSelected];
-        cursor.x = sel.x - 20;
+        cursor.x = sel.x - 18;
         cursor.y = sel.y + (sel.height - cursor.height) / 2;
     }
 
     function refreshValues():Void
     {
-        valueTexts[0].text = masterVolume + " / 10";
-        valueTexts[1].text = musicVolume  + " / 10";
-        valueTexts[2].text = sfxVolume    + " / 10";
-        valueTexts[3].text = fullscreen   ? "ON" : "OFF";
-        valueTexts[4].text = showFPS      ? "ON" : "OFF";
+        valueTexts[0].text  = masterVolume + " / 10";
+        valueTexts[0].color = volumeColor(masterVolume);
+        valueTexts[1].text  = musicVolume  + " / 10";
+        valueTexts[1].color = volumeColor(musicVolume);
+        valueTexts[2].text  = sfxVolume    + " / 10";
+        valueTexts[2].color = volumeColor(sfxVolume);
+        valueTexts[3].text  = fullscreen   ? "ON" : "OFF";
+        valueTexts[3].color = fullscreen   ? FlxColor.fromRGB(100, 255, 120) : FlxColor.fromRGB(180, 180, 180);
+        valueTexts[4].text  = showFPS      ? "ON" : "OFF";
+        valueTexts[4].color = showFPS      ? FlxColor.fromRGB(100, 255, 120) : FlxColor.fromRGB(180, 180, 180);
 
         #if desktop
-        valueTexts[5].text  = discordRPC ? "ON" : "OFF";
+        valueTexts[5].text  = discordRPC   ? "ON" : "OFF";
         valueTexts[5].color = discordRPC
-            ? FlxColor.fromRGB(114, 137, 218)  // cor do Discord
-            : FlxColor.fromRGBFloat(0.5, 0.5, 0.5);
+            ? FlxColor.fromRGB(114, 137, 218)
+            : FlxColor.fromRGB(180, 180, 180);
         #end
+    }
+
+    function volumeColor(v:Int):FlxColor
+    {
+        if (v >= 8) return FlxColor.fromRGB(100, 255, 120);
+        if (v >= 5) return FlxColor.CYAN;
+        if (v >= 2) return FlxColor.YELLOW;
+        return FlxColor.fromRGB(255, 80, 80);
     }
 
     function applyValues():Void
@@ -370,10 +430,7 @@ class OptionsState extends FlxState
         FlxG.fullscreen = fullscreen;
 
         #if debug
-        if (showFPS)
-            debugDisplay.visible = true;
-        else
-            debugDisplay.visible = false;
+        debugDisplay.visible = showFPS;
         #end
     }
 
@@ -383,7 +440,6 @@ class OptionsState extends FlxState
     function toggleDiscord():Void
     {
         discordRPC = !discordRPC;
-
         if (discordRPC)
         {
             discord.Discord.init();
@@ -406,6 +462,7 @@ class OptionsState extends FlxState
         FlxTween.tween(overlay,   {alpha: 0}, 0.4, {ease: FlxEase.quartIn});
         FlxTween.tween(titleText, {alpha: 0}, 0.4, {ease: FlxEase.quartIn});
         FlxTween.tween(cursor,    {alpha: 0}, 0.3, {ease: FlxEase.quartIn});
+        FlxTween.tween(hintText,  {alpha: 0}, 0.3, {ease: FlxEase.quartIn});
 
         for (i in 0...OPTIONS.length)
         {
