@@ -1,4 +1,3 @@
-```haxe
 package backend;
 
 import flixel.FlxG;
