@@ -46,7 +46,7 @@
     <assets path="assets/images" rename="images" include="*" />
     <assets path="assets/sounds" rename="sounds" />
     <assets path="assets/music"  rename="music" />
-    <assets path="assets/data"   rename="data" />
+    <assets path="assets/data" rename="data" include="*" recursive="true" />
 
     <!-- ==================== Build Flags ==================== -->
     <!-- Debug builds -->
