@@ -4,7 +4,7 @@
     <!-- ==================== Project Info ==================== -->
     <meta title="Kareshi Project"
           package="com.kareshiproject.game"
-          version="0.0.1"
+          version="0.0.2"
           company="Kareshi Project Team" />
 
     <!-- ==================== Application ==================== -->
@@ -60,7 +60,7 @@
     <!-- ==================== Android ==================== -->
     <android package="com.kareshiproject.game"
              versionCode="1"
-             versionName="0.0.1"
+             versionName="0.0.2"
              minSdkVersion="21"
              targetSdkVersion="33"
              orientation="landscape"
