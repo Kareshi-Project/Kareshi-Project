@@ -64,23 +64,10 @@ class Bullet extends FlxSprite
                 {
                     var a:Float;
                     var c:FlxColor;
-                    if (dist <= radius * 0.4)
-                    {
-                        c = FlxColor.WHITE;
-                        a = 1.0;
-                    }
-                    else if (dist <= radius)
-                    {
-                        c = col;
-                        a = 1.0;
-                    }
-                    else
-                    {
-                        c = col;
-                        a = 1.0 - (dist - radius) / 2.0;
-                    }
-                    c = FlxColor.fromRGBFloat(c.redFloat, c.greenFloat, c.blueFloat, Math.max(0, a));
-                    pixels.setPixel32(px, py, c);
+                    if (dist <= radius * 0.4)      { c = FlxColor.WHITE; a = 1.0; }
+                    else if (dist <= radius)        { c = col;            a = 1.0; }
+                    else                            { c = col;            a = 1.0 - (dist - radius) / 2.0; }
+                    pixels.setPixel32(px, py, FlxColor.fromRGBFloat(c.redFloat, c.greenFloat, c.blueFloat, Math.max(0, a)));
                 }
             }
         }
@@ -268,8 +255,7 @@ class PlayState extends FlxState
     var paused:Bool       = false;
     var bossDefeated:Bool = false;
 
-    // Shoot cooldown input (estilo Touhou: Z mantido dispara)
-    var shootHeld:Bool      = false;
+    // Shoot
     var shootHeldTime:Float = 0;
 
     // Debug
@@ -277,45 +263,54 @@ class PlayState extends FlxState
     var debugDisplay:DebugDisplay;
     #end
 
-    // ==================== Play area ====================
-    // Área de jogo centralizada com painel lateral
-    static final PLAY_X:Float  = 32;
-    static final PLAY_Y:Float  = 16;
-    static final PLAY_W:Float  = 448;
+    // Play area
+    static final PLAY_X:Float = 32;
+    static final PLAY_Y:Float = 16;
+    static final PLAY_W:Float = 448;
     static inline function playH():Float return FlxG.height - 32;
 
     // ==================== Mobile ====================
     #if mobile
+
+    // Pause
     var pauseButton:FlxSprite;
 
-    // Joystick — lado esquerdo da tela
+    // Joystick
     var joystickBG:FlxSprite;
     var joystickKnob:FlxSprite;
-    var joystickTouchID:Int = -1;
-    var joystickBaseX:Float = 0;
-    var joystickBaseY:Float = 0;
-    var joystickDX:Float    = 0;
-    var joystickDY:Float    = 0;
+    var joystickTouchID:Int  = -1;
+    var joystickBaseX:Float  = 0;
+    var joystickBaseY:Float  = 0;
+    var joystickDX:Float     = 0;
+    var joystickDY:Float     = 0;
     static final JOYSTICK_RADIUS:Float = 65;
     static final KNOB_RADIUS:Float     = 26;
-    static final JOYSTICK_DEAD:Float   = 0.12;
+    static final JOYSTICK_DEAD:Float   = 0.10;
 
-    // Botões — lado direito
+    // Botões
     var shootButton:FlxSprite;
     var focusButton:FlxSprite;
     var bombButton:FlxSprite;
-    var shootBtnLabel:FlxText;
-    var focusBtnLabel:FlxText;
-    var bombBtnLabel:FlxText;
 
+    // Touch IDs dos botões
+    var shootTouchID:Int = -1;
+    var focusTouchID:Int = -1;
+    var bombTouchID:Int  = -1;
+
+    // Estado dos botões
     var mobileShoot:Bool = false;
     var mobileFocus:Bool = false;
     var mobileBomb:Bool  = false;
 
-    // IDs de toque dos botões
-    var shootTouchID:Int = -1;
-    var focusTouchID:Int = -1;
-    var bombTouchID:Int  = -1;
+    // Regiões dos botões (para overlap preciso)
+    var shootBtnCX:Float = 0;
+    var shootBtnCY:Float = 0;
+    var focusBtnCX:Float = 0;
+    var focusBtnCY:Float = 0;
+    var bombBtnCX:Float  = 0;
+    var bombBtnCY:Float  = 0;
+    static final BTN_RADIUS:Float = 28;
+
     #end
 
     // ==================== Create ====================
@@ -558,7 +553,7 @@ class PlayState extends FlxState
     #if mobile
     function createMobileUI():Void
     {
-        // Pause button — canto superior direito
+        // ---- Pause button (canto superior direito) ----
         pauseButton = new FlxSprite(FlxG.width - 52, 8);
         pauseButton.loadGraphic("images/mobile/pause.png");
         pauseButton.setGraphicSize(40, 40);
@@ -566,98 +561,98 @@ class PlayState extends FlxState
         pauseButton.scrollFactor.set(0, 0);
         add(pauseButton);
 
-        // Joystick — posição base no canto inferior esquerdo
-        var joyBX:Float = 110;
-        var joyBY:Float = FlxG.height - 120;
+        // ---- Joystick (lado esquerdo, fixo) ----
+        var joyBX:Float = 100;
+        var joyBY:Float = FlxG.height - 130;
+        joystickBaseX = joyBX;
+        joystickBaseY = joyBY;
 
         joystickBG = new FlxSprite(
             joyBX - JOYSTICK_RADIUS - 10,
             joyBY - JOYSTICK_RADIUS - 10
         ).makeGraphic(
-            Std.int(JOYSTICK_RADIUS * 2 + 20),
-            Std.int(JOYSTICK_RADIUS * 2 + 20),
+            Std.int((JOYSTICK_RADIUS + 10) * 2),
+            Std.int((JOYSTICK_RADIUS + 10) * 2),
             FlxColor.TRANSPARENT
         );
-        drawCircleOnSprite(joystickBG, JOYSTICK_RADIUS + 10, JOYSTICK_RADIUS, FlxColor.fromRGBFloat(1, 1, 1, 0.12), false);
+        drawCircleOnSprite(joystickBG, JOYSTICK_RADIUS + 10, JOYSTICK_RADIUS, FlxColor.fromRGBFloat(1, 1, 1, 0.10), false);
         joystickBG.scrollFactor.set(0, 0);
         add(joystickBG);
 
         joystickKnob = new FlxSprite(
-            joyBX - KNOB_RADIUS - 2,
-            joyBY - KNOB_RADIUS - 2
+            joyBX - KNOB_RADIUS,
+            joyBY - KNOB_RADIUS
         ).makeGraphic(
-            Std.int(KNOB_RADIUS * 2 + 4),
-            Std.int(KNOB_RADIUS * 2 + 4),
+            Std.int(KNOB_RADIUS * 2),
+            Std.int(KNOB_RADIUS * 2),
             FlxColor.TRANSPARENT
         );
-        drawCircleOnSprite(joystickKnob, KNOB_RADIUS + 2, KNOB_RADIUS, FlxColor.fromRGBFloat(0.6, 0.85, 1.0, 0.65), true);
+        drawCircleOnSprite(joystickKnob, KNOB_RADIUS, KNOB_RADIUS, FlxColor.fromRGBFloat(0.6, 0.85, 1.0, 0.65), true);
         joystickKnob.scrollFactor.set(0, 0);
         add(joystickKnob);
 
-        joystickBaseX = joyBX;
-        joystickBaseY = joyBY;
+        // ---- Botões lado direito ----
+        // Layout:
+        //   [FOCUS]
+        //            [BOMB]
+        //   [SHOT]
+        var rightEdge:Float = FlxG.width - 20;
+        var botY:Float      = FlxG.height - 70;
+        var midY:Float      = FlxG.height - 140;
+        var topY:Float      = FlxG.height - 210;
+        var leftCol:Float   = rightEdge - BTN_RADIUS * 2 - 50;
+        var rightCol:Float  = rightEdge - BTN_RADIUS * 2;
 
-        // Botões lado direito — layout estilo Touhou
-        //  FOCUS
-        //       BOMB
-        //  SHOT
-        var btnRightX:Float = FlxG.width - 60;
-        var btnMidX:Float   = FlxG.width - 110;
-        var btnBotY:Float   = FlxG.height - 60;
-        var btnMidY:Float   = FlxG.height - 120;
-        var btnTopY:Float   = FlxG.height - 180;
+        // Centros dos botões para detecção por distância
+        shootBtnCX = leftCol  + BTN_RADIUS;
+        shootBtnCY = botY     + BTN_RADIUS;
+        focusBtnCX = leftCol  + BTN_RADIUS;
+        focusBtnCY = topY     + BTN_RADIUS;
+        bombBtnCX  = rightCol + BTN_RADIUS;
+        bombBtnCY  = midY     + BTN_RADIUS;
 
-        shootButton = makeMobileButton(btnMidX, btnBotY, FlxColor.fromRGB(100, 200, 255));
-        focusButton = makeMobileButton(btnMidX, btnTopY, FlxColor.fromRGB(255, 220, 80));
-        bombButton  = makeMobileButton(btnRightX, btnMidY, FlxColor.fromRGB(255, 100, 100));
+        shootButton = makeMobileButton(leftCol,  botY, FlxColor.fromRGB(100, 200, 255), "SHOT");
+        focusButton = makeMobileButton(leftCol,  topY, FlxColor.fromRGB(255, 220, 80),  "FOCUS");
+        bombButton  = makeMobileButton(rightCol, midY, FlxColor.fromRGB(255, 100, 100), "BOMB");
 
         add(shootButton);
         add(focusButton);
         add(bombButton);
-
-        shootBtnLabel = makeBtnLabel(btnMidX,   btnBotY,  "SHOT");
-        focusBtnLabel = makeBtnLabel(btnMidX,   btnTopY,  "FOCUS");
-        bombBtnLabel  = makeBtnLabel(btnRightX, btnMidY,  "BOMB");
-
-        add(shootBtnLabel);
-        add(focusBtnLabel);
-        add(bombBtnLabel);
     }
 
-    function makeMobileButton(bx:Float, by:Float, col:FlxColor):FlxSprite
+    function makeMobileButton(bx:Float, by:Float, col:FlxColor, label:String):FlxSprite
     {
-        var btn = new FlxSprite(bx, by).makeGraphic(48, 48, FlxColor.TRANSPARENT);
-        var r   = 22.0;
-        var cx  = btn.pixels.width  / 2.0;
-        var cy  = btn.pixels.height / 2.0;
-        for (px in 0...btn.pixels.width)
+        var size = Std.int(BTN_RADIUS * 2);
+        var btn  = new FlxSprite(bx, by).makeGraphic(size, size, FlxColor.TRANSPARENT);
+        var cx   = BTN_RADIUS;
+        var cy   = BTN_RADIUS;
+
+        for (px in 0...size)
         {
-            for (py in 0...btn.pixels.height)
+            for (py in 0...size)
             {
                 var dx   = px - cx;
                 var dy   = py - cy;
                 var dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist <= r)
+                if (dist <= BTN_RADIUS)
                 {
-                    var t  = dist / r;
+                    var t  = dist / BTN_RADIUS;
                     var rc = FlxColor.interpolate(FlxColor.WHITE, col, t);
-                    var a  = dist <= r - 2 ? 0.72 : 0.35;
+                    var a  = dist <= BTN_RADIUS - 2 ? 0.70 : 0.30;
                     btn.pixels.setPixel32(px, py, FlxColor.fromRGBFloat(rc.redFloat, rc.greenFloat, rc.blueFloat, a));
                 }
             }
         }
         btn.dirty = true;
         btn.scrollFactor.set(0, 0);
-        return btn;
-    }
 
-    function makeBtnLabel(bx:Float, by:Float, label:String):FlxText
-    {
-        var t = new FlxText(bx, by + 14, 48, label);
-        t.setFormat(null, 10, FlxColor.WHITE, "center");
-        t.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 1);
-        t.scrollFactor.set(0, 0);
-        return t;
+        var txt = new FlxText(bx, by + BTN_RADIUS - 8, size, label);
+        txt.setFormat(null, 10, FlxColor.WHITE, "center");
+        txt.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 1);
+        txt.scrollFactor.set(0, 0);
+        add(txt);
+
+        return btn;
     }
 
     function drawCircleOnSprite(sprite:FlxSprite, cx:Float, r:Float, col:FlxColor, filled:Bool):Void
@@ -679,6 +674,14 @@ class PlayState extends FlxState
             }
         }
         sprite.dirty = true;
+    }
+
+    // Detecta se um toque está dentro de um botão circular
+    function touchInButton(tx:Float, ty:Float, cx:Float, cy:Float):Bool
+    {
+        var dx = tx - cx;
+        var dy = ty - cy;
+        return Math.sqrt(dx * dx + dy * dy) <= BTN_RADIUS + 8; // margem extra
     }
     #end
 
@@ -755,69 +758,87 @@ class PlayState extends FlxState
     #if mobile
     function handleMobileInput(elapsed:Float):Void
     {
+        // Reset estados dos botões
         mobileShoot = false;
         mobileFocus = false;
         mobileBomb  = false;
 
-        // Toque iniciado
+        // ---- Toque iniciado ----
         for (touch in FlxG.touches.justStarted())
         {
+            var tx = touch.screenX;
+            var ty = touch.screenY;
+            var id = touch.touchPointID;
+
             // Pause button
-            if (pauseButton.overlapsPoint(touch.getWorldPosition()))
+            if (tx > FlxG.width - 60 && ty < 56)
             {
                 paused = true;
                 openSubState(new substates.PauseSubState());
                 return;
             }
 
-            // Botões do lado direito (metade direita da tela)
-            if (touch.screenX > FlxG.width * 0.5)
+            // Botões (lado direito da tela — metade direita)
+            if (tx > FlxG.width * 0.5)
             {
-                if (shootButton.overlapsPoint(touch.getWorldPosition()))
-                    shootTouchID = touch.touchPointID;
-                else if (focusButton.overlapsPoint(touch.getWorldPosition()))
-                    focusTouchID = touch.touchPointID;
-                else if (bombButton.overlapsPoint(touch.getWorldPosition()))
-                    bombTouchID = touch.touchPointID;
+                if (touchInButton(tx, ty, shootBtnCX, shootBtnCY) && shootTouchID == -1)
+                {
+                    shootTouchID = id;
+                }
+                else if (touchInButton(tx, ty, focusBtnCX, focusBtnCY) && focusTouchID == -1)
+                {
+                    focusTouchID = id;
+                }
+                else if (touchInButton(tx, ty, bombBtnCX, bombBtnCY) && bombTouchID == -1)
+                {
+                    bombTouchID = id;
+                }
             }
 
-            // Joystick — qualquer toque no lado esquerdo que não seja botão
-            if (touch.screenX < FlxG.width * 0.5 && joystickTouchID == -1)
+            // Joystick (lado esquerdo — qualquer toque que não seja botão)
+            if (tx < FlxG.width * 0.5 && joystickTouchID == -1)
             {
-                joystickTouchID = touch.touchPointID;
-                joystickBaseX   = touch.screenX;
-                joystickBaseY   = touch.screenY;
+                joystickTouchID = id;
 
-                // Reposiciona o joystick onde o dedo tocou
-                joystickBG.x    = joystickBaseX - JOYSTICK_RADIUS - 10;
-                joystickBG.y    = joystickBaseY - JOYSTICK_RADIUS - 10;
-                joystickKnob.x  = joystickBaseX - KNOB_RADIUS - 2;
-                joystickKnob.y  = joystickBaseY - KNOB_RADIUS - 2;
+                // Reposiciona joystick onde o dedo tocou
+                joystickBaseX  = tx;
+                joystickBaseY  = ty;
+
+                joystickBG.x   = tx - JOYSTICK_RADIUS - 10;
+                joystickBG.y   = ty - JOYSTICK_RADIUS - 10;
+                joystickKnob.x = tx - KNOB_RADIUS;
+                joystickKnob.y = ty - KNOB_RADIUS;
             }
         }
 
-        // Toque mantido
+        // ---- Toque mantido ----
         joystickDX = 0;
         joystickDY = 0;
 
         for (touch in FlxG.touches.list)
         {
+            var tx = touch.screenX;
+            var ty = touch.screenY;
             var id = touch.touchPointID;
 
+            // Atualiza estados dos botões por ID
             if (id == shootTouchID) mobileShoot = true;
             if (id == focusTouchID) mobileFocus = true;
             if (id == bombTouchID)  mobileBomb  = true;
 
+            // Atualiza joystick
             if (id == joystickTouchID)
             {
-                var dx   = touch.screenX - joystickBaseX;
-                var dy   = touch.screenY - joystickBaseY;
+                var dx   = tx - joystickBaseX;
+                var dy   = ty - joystickBaseY;
                 var dist = Math.sqrt(dx * dx + dy * dy);
 
+                // Clamp no raio
                 if (dist > JOYSTICK_RADIUS)
                 {
                     dx = dx / dist * JOYSTICK_RADIUS;
                     dy = dy / dist * JOYSTICK_RADIUS;
+                    dist = JOYSTICK_RADIUS;
                 }
 
                 var nx = dx / JOYSTICK_RADIUS;
@@ -827,30 +848,32 @@ class PlayState extends FlxState
                 joystickDX = Math.abs(nx) > JOYSTICK_DEAD ? nx : 0;
                 joystickDY = Math.abs(ny) > JOYSTICK_DEAD ? ny : 0;
 
-                joystickKnob.x = joystickBaseX + dx - KNOB_RADIUS - 2;
-                joystickKnob.y = joystickBaseY + dy - KNOB_RADIUS - 2;
+                // Move o knob
+                joystickKnob.x = joystickBaseX + dx - KNOB_RADIUS;
+                joystickKnob.y = joystickBaseY + dy - KNOB_RADIUS;
             }
         }
 
-        // Toque liberado
+        // ---- Toque liberado ----
         for (touch in FlxG.touches.justReleased())
         {
             var id = touch.touchPointID;
+
             if (id == joystickTouchID)
             {
                 joystickTouchID = -1;
-                joystickDX = 0;
-                joystickDY = 0;
-                // Volta o knob para o centro
-                joystickKnob.x = joystickBG.x + JOYSTICK_RADIUS - KNOB_RADIUS + 8;
-                joystickKnob.y = joystickBG.y + JOYSTICK_RADIUS - KNOB_RADIUS + 8;
+                joystickDX      = 0;
+                joystickDY      = 0;
+                // Volta o knob ao centro
+                joystickKnob.x  = joystickBaseX - KNOB_RADIUS;
+                joystickKnob.y  = joystickBaseY - KNOB_RADIUS;
             }
-            if (id == shootTouchID) shootTouchID = -1;
-            if (id == focusTouchID) focusTouchID = -1;
-            if (id == bombTouchID)  bombTouchID  = -1;
+            if (id == shootTouchID) { shootTouchID = -1; mobileShoot = false; }
+            if (id == focusTouchID) { focusTouchID = -1; mobileFocus = false; }
+            if (id == bombTouchID)  { bombTouchID  = -1; mobileBomb  = false; }
         }
 
-        // Aplica movimento
+        // ---- Aplica movimento ao player ----
         var spd = mobileFocus ? player.focusSpeed : player.moveSpeed;
         player.velocity.set(joystickDX * spd, joystickDY * spd);
 
@@ -862,7 +885,7 @@ class PlayState extends FlxState
         player.hitboxSprite.exists = mobileFocus;
         if (mobileFocus)
         {
-            player.focusRing.angle += 90 * (1.0 / 60.0);
+            player.focusRing.angle += 90 * elapsed;
             player.focusRing.x = player.x + (player.width  - player.focusRing.width)  / 2;
             player.focusRing.y = player.y + (player.height - player.focusRing.height) / 2;
             player.hitboxSprite.x = player.x + (player.width  - player.hitboxSprite.width)  / 2;
@@ -880,14 +903,11 @@ class PlayState extends FlxState
         var spd       = isFocused ? player.focusSpeed : player.moveSpeed;
         var move      = controls.getMovement();
 
-        // Touhou: movimento diagonal tem velocidade normalizada
         player.velocity.set(move.x * spd, move.y * spd);
 
-        // Clamp dentro da área de jogo
         player.x = Math.max(PLAY_X, Math.min(PLAY_X + PLAY_W - player.width,  player.x));
         player.y = Math.max(PLAY_Y, Math.min(PLAY_Y + playH() - player.height, player.y));
 
-        // Focus ring e hitbox
         player.focusRing.exists    = isFocused;
         player.hitboxSprite.exists = isFocused;
         if (isFocused)
@@ -911,7 +931,6 @@ class PlayState extends FlxState
         var shooting  = mobileShoot;
         var isFocused = mobileFocus;
         #else
-        // Touhou: Z para atirar (held), Shift para focus
         var shooting  = controls.pressed(Action.SHOOT);
         var isFocused = controls.pressed(Action.FOCUS);
         #end
@@ -919,10 +938,8 @@ class PlayState extends FlxState
         if (shooting)
         {
             shootHeldTime += elapsed;
-
-            // Cooldown menor quanto mais tempo Z for segurado (estilo Touhou power up feel)
             var cooldown = isFocused ? 0.055 : 0.085;
-            if (shootHeldTime > 1.5) cooldown *= 0.85; // leve aceleração ao segurar
+            if (shootHeldTime > 1.5) cooldown *= 0.85;
 
             if (player.shootCooldown <= 0)
             {
@@ -943,14 +960,12 @@ class PlayState extends FlxState
 
         if (isFocused)
         {
-            // Tiro focado: 3 balas centrais concentradas, mais dano
             playerBullets.fire(bx,     by,     -90, 660, FlxColor.fromRGB(220, 255, 255), true, 4);
             playerBullets.fire(bx - 4, by + 2, -90, 645, FlxColor.fromRGB(180, 230, 255), true, 3);
             playerBullets.fire(bx + 4, by + 2, -90, 645, FlxColor.fromRGB(180, 230, 255), true, 3);
         }
         else
         {
-            // Tiro espalhado: 5 balas em leque (estilo Reimu)
             playerBullets.fire(bx,      by,     -90, 560, FlxColor.fromRGB(100, 220, 255), true, 4);
             playerBullets.fire(bx - 10, by + 2, -93, 540, FlxColor.fromRGB(80,  200, 255), true, 3);
             playerBullets.fire(bx + 10, by + 2, -87, 540, FlxColor.fromRGB(80,  200, 255), true, 3);
@@ -978,7 +993,7 @@ class PlayState extends FlxState
 
         if (bossHP <= bossHPMax * 0.5 && bossPhase == 0)
         {
-            bossPhase = 1;
+            bossPhase  = 1;
             boss.color = FlxColor.fromRGB(255, 150, 50);
             FlxFlicker.flicker(boss, 0.8, 0.06);
         }
