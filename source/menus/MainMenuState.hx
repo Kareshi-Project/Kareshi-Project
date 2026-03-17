@@ -33,20 +33,17 @@ class MainMenuState extends FlxState
     var canInput:Bool   = false;
     var controls:Controls;
 
-    // Input cooldown para segurar tecla
     var inputCooldown:Float = 0;
     static final INPUT_COOLDOWN:Float = 0.14;
 
-    // Mobile touch
-    var touchStartX:Float  = 0;
-    var touchStartY:Float  = 0;
-    var touchMoved:Bool    = false;
+    var touchStartX:Float   = 0;
+    var touchStartY:Float   = 0;
+    var touchMoved:Bool     = false;
     var lastSwipeTime:Float = 0;
     static final SWIPE_THRESHOLD:Float = 35;
     static final TAP_THRESHOLD:Float   = 12;
     static final SWIPE_COOLDOWN:Float  = 0.18;
 
-    // Debug
     #if debug
     var debugDisplay:DebugDisplay;
     #end
@@ -121,7 +118,7 @@ class MainMenuState extends FlxState
         #end
 
         // Versão
-        versionText = new FlxText(FlxG.width - 90, FlxG.height - 20, 86, "v0.0.1");
+        versionText = new FlxText(FlxG.width - 90, FlxG.height - 20, 86, "v0.0.2");
         versionText.setFormat(null, 12, FlxColor.fromRGBFloat(1, 1, 1, 0.3), "right");
         add(versionText);
 
@@ -163,13 +160,11 @@ class MainMenuState extends FlxState
 
         if (!canInput) return;
 
-        inputCooldown  -= elapsed;
-        lastSwipeTime  -= elapsed;
+        inputCooldown -= elapsed;
+        lastSwipeTime -= elapsed;
 
-        // Cursor pisca
         cursor.alpha = 0.5 + Math.sin(haxe.Timer.stamp() * 5) * 0.5;
 
-        // Atualiza hint se gamepad conectado/desconectado
         #if desktop
         updateHint();
         handleKeyboardAndGamepad(elapsed);
@@ -197,7 +192,6 @@ class MainMenuState extends FlxState
     #if desktop
     function handleKeyboardAndGamepad(elapsed:Float):Void
     {
-        // Navegação com repeat ao segurar
         if (controls.justPressed(Action.UP) || (controls.pressed(Action.UP) && inputCooldown <= 0))
         {
             changeSelection(-1);
@@ -218,8 +212,10 @@ class MainMenuState extends FlxState
         if (controls.justPressed(Action.PAUSE))
             selectAndConfirm(OPTIONS.length - 1);
 
-        // Toggle debug
         #if debug
+        if (FlxG.keys.justPressed.SEVEN)
+            FlxG.switchState(new menus.debug.EditorState());
+
         if (FlxG.keys.justPressed.F2)
             debugDisplay.toggle();
         #end
@@ -311,10 +307,9 @@ class MainMenuState extends FlxState
             optionTexts[i].size  = isSelected ? 40 : 36;
         }
 
-        var sel     = optionTexts[curSelected];
-        var textW:Float = FlxG.width;
+        var sel           = optionTexts[curSelected];
         var approxTextW:Float = sel.text.length * sel.size * 0.55;
-        var centerX:Float = (textW - approxTextW) / 2;
+        var centerX:Float = (FlxG.width - approxTextW) / 2;
 
         cursor.x = centerX - 24;
         cursor.y = sel.y + (sel.height - cursor.height) / 2;
@@ -324,7 +319,6 @@ class MainMenuState extends FlxState
     {
         canInput = false;
 
-        // Bump animation
         FlxTween.tween(optionTexts[curSelected], {size: 44}, 0.07, {
             ease: FlxEase.quartOut,
             onComplete: function(_) transitionTo(curSelected)
