@@ -1,0 +1,254 @@
+var GAME_VERSION  = "0.0.2";
+var GAME_TITLE    = "Kareshi Project";
+var GAME_SUBTITLE = "Touhou Fangame";
+var BUILD_TYPE    = "DEBUG";
+
+trace(GAME_TITLE + " v" + GAME_VERSION + " [" + BUILD_TYPE + "] — global.hscript loaded.");
+
+// ==================== Configurações globais ====================
+
+var config = {
+    masterVolume:  1.0,
+    musicVolume:   1.0,
+    sfxVolume:     1.0,
+    fullscreen:    false,
+    showFPS:       false,
+    discordRPC:    true,
+    language:      "en",
+    difficulty:    "easy"
+};
+
+// ==================== Constantes do jogo ====================
+
+var PLAY_AREA = {
+    x:      32,
+    y:      16,
+    width:  448,
+    height: 688
+};
+
+var PLAYER_DEFAULTS = {
+    lives:       3,
+    bombs:       3,
+    moveSpeed:   200,
+    focusSpeed:  90,
+    hitboxSize:  5
+};
+
+var SCORING = {
+    graze:           3,
+    enemyKill:       100,
+    midBossClear:    5000,
+    bossClear:       50000,
+    livesBonus:      10000,
+    bombsBonus:      3000,
+    noMissBonus:     20000,
+    noBombBonus:     10000
+};
+
+var DIFFICULTIES = {
+    easy:   { bulletSpeedMult: 0.75, bulletCountMult: 0.75, bossHPMult: 0.75  },
+    normal: { bulletSpeedMult: 1.00, bulletCountMult: 1.00, bossHPMult: 1.00  },
+    hard:   { bulletSpeedMult: 1.25, bulletCountMult: 1.25, bossHPMult: 1.25  },
+    lunatic:{ bulletSpeedMult: 1.60, bulletCountMult: 1.60, bossHPMult: 1.50  }
+};
+
+// ==================== Paleta de cores ====================
+
+var COLORS = {
+    // UI
+    uiPrimary:    colorFromHex("#A0A0DC"),
+    uiSecondary:  colorFromHex("#6464C8"),
+    uiAccent:     colorFromHex("#FFFF50"),
+    uiDanger:     colorFromHex("#FF5064"),
+    uiSafe:       colorFromHex("#64FF78"),
+
+    // Player
+    playerShot:   colorFromHex("#64DCFF"),
+    playerFocus:  colorFromHex("#DCFFFF"),
+    playerHitbox: colorFromHex("#FFFFFF"),
+
+    // Boss
+    bossPhase1:   colorFromHex("#FF3C50"),
+    bossPhase2:   colorFromHex("#FF9632"),
+    bossGlow:     colorFromHex("#FF1428"),
+
+    // Balas inimigas
+    bulletRed:    colorFromHex("#FF5064"),
+    bulletOrange: colorFromHex("#FFB432"),
+    bulletPurple: colorFromHex("#C850FF"),
+    bulletBlue:   colorFromHex("#50C8FF"),
+    bulletYellow: colorFromHex("#FFDC64"),
+
+    // Background
+    bgDark:       colorFromHex("#020212"),
+    bgMid:        colorFromHex("#020212"),
+    starFar:      colorFromHex("#3C3C64"),
+    starNear:     colorFromHex("#DCDCFF")
+};
+
+// ==================== Funções utilitárias ====================
+
+function clamp(val, min, max) {
+    if (val < min) return min;
+    if (val > max) return max;
+    return val;
+}
+
+function sign(val) {
+    if (val > 0) return 1;
+    if (val < 0) return -1;
+    return 0;
+}
+
+function distance(x1, y1, x2, y2) {
+    var dx = x2 - x1;
+    var dy = y2 - y1;
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
+function angleTowards(x1, y1, x2, y2) {
+    return Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+}
+
+function formatScore(score) {
+    return StringTools.lpad(Std.string(score), "0", 8);
+}
+
+function formatTime(seconds) {
+    var mins = Std.int(seconds / 60);
+    var secs = Std.int(seconds % 60);
+    return StringTools.lpad(Std.string(mins), "0", 2)
+         + ":"
+         + StringTools.lpad(Std.string(secs), "0", 2);
+}
+
+function randomBetween(min, max) {
+    return random(min, max);
+}
+
+function randomIntBetween(min, max) {
+    return randomInt(min, max);
+}
+
+function lerpColor(colA, colB, t) {
+    return FlxColor.interpolate(colA, colB, t);
+}
+
+function percentOf(value, total) {
+    if (total == 0) return 0;
+    return (value / total) * 100;
+}
+
+function secondsToFrames(seconds, fps) {
+    return Std.int(seconds * fps);
+}
+
+function framesToSeconds(frames, fps) {
+    return frames / fps;
+}
+
+// ==================== Difficulty helpers ====================
+
+function getDifficultyData(diff) {
+    if (diff == "easy")    return DIFFICULTIES.easy;
+    if (diff == "normal")  return DIFFICULTIES.normal;
+    if (diff == "hard")    return DIFFICULTIES.hard;
+    if (diff == "lunatic") return DIFFICULTIES.lunatic;
+    return DIFFICULTIES.normal;
+}
+
+function applyDifficulty(baseValue, mult) {
+    return baseValue * mult;
+}
+
+// ==================== Score helpers ====================
+
+function calcStageBonus(lives, bombs, noMiss, noBomb) {
+    var bonus = 0;
+    bonus += lives * SCORING.livesBonus;
+    bonus += bombs * SCORING.bombsBonus;
+    if (noMiss) bonus += SCORING.noMissBonus;
+    if (noBomb) bonus += SCORING.noBombBonus;
+    return bonus;
+}
+
+// ==================== Lifecycle hooks ====================
+
+function onCreate() {
+    trace("[global.hscript] onCreate — game initializing.");
+
+    // Aplica volume inicial
+    FlxG.sound.volume = config.masterVolume;
+
+    log("Config loaded: volume=" + config.masterVolume
+        + " | difficulty=" + config.difficulty
+        + " | language=" + config.language);
+}
+
+function onUpdate(elapsed) {
+    // Reservado para lógica global de update
+    // ex: hotkeys globais, cheats, etc.
+}
+
+function onDestroy() {
+    trace("[global.hscript] onDestroy — cleaning up.");
+}
+
+// ==================== Cheat codes (debug only) ====================
+
+function onCheatEntered(code) {
+    if (code == "NOCLIP") {
+        log("Cheat: NOCLIP activated.");
+        return true;
+    }
+    if (code == "GODMODE") {
+        log("Cheat: GODMODE activated.");
+        return true;
+    }
+    if (code == "ALLSTAGES") {
+        log("Cheat: All stages unlocked.");
+        return true;
+    }
+    if (code == "MAXPOWER") {
+        log("Cheat: Max power activated.");
+        return true;
+    }
+    return false;
+}
+
+// ==================== Event hooks ====================
+
+function onPlayerDeath(lives) {
+    log("Player died. Lives remaining: " + lives);
+}
+
+function onPlayerBomb(bombs) {
+    log("Player used bomb. Bombs remaining: " + bombs);
+}
+
+function onBossPhaseChange(phase) {
+    log("Boss entered phase " + phase);
+}
+
+function onBossDefeated(score) {
+    log("Boss defeated! Score: " + formatScore(score));
+}
+
+function onGameOver(score) {
+    log("Game Over. Final score: " + formatScore(score));
+}
+
+function onStageClear(stage, score) {
+    log("Stage " + stage + " cleared! Score: " + formatScore(score));
+}
+
+function onGraze(count) {
+    // Chamado a cada graze
+}
+
+function onItemCollected(type, value) {
+    log("Item collected: " + type + " (" + value + ")");
+}
+
+trace("[global.hscript] All definitions loaded successfully.");
