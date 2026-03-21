@@ -13,8 +13,6 @@ import flixel.tweens.FlxTween;
 import flixel.tweens.FlxEase;
 import flixel.math.FlxMath;
 
-// ==================== Script Result ====================
-
 typedef ScriptResult =
 {
     var success:Bool;
@@ -22,145 +20,133 @@ typedef ScriptResult =
     var error:String;
 }
 
-// ==================== HScript ====================
-
 class HScript
 {
-    // ==================== Core ====================
-
     var parser:Parser;
     var interp:Interp;
     var ast:Expr;
 
-    public var scriptPath:String  = "";
-    public var isLoaded:Bool      = false;
-    public var hasError:Bool      = false;
-    public var lastError:String   = "";
+    public var scriptPath:String = "";
+    public var isLoaded:Bool     = false;
+    public var hasError:Bool     = false;
+    public var lastError:String  = "";
 
-    // Callbacks externos
     public var onError:String -> Void = null;
     public var onTrace:String -> Void = null;
 
-    // ==================== Static Cache ====================
-
     static var cache:Map<String, Expr> = new Map();
-
-    // ==================== Constructor ====================
 
     public function new()
     {
         parser = new Parser();
         interp = new Interp();
 
-        parser.allowJSON    = true;
-        parser.allowTypes   = true;
+        parser.allowJSON     = true;
+        parser.allowTypes    = true;
         parser.allowMetadata = true;
 
         setupDefaultVariables();
     }
 
-    // ==================== Default Variables ====================
-
     function setupDefaultVariables():Void
     {
-        // ---- Flixel ----
-        set("FlxG",       FlxG);
-        set("FlxSprite",  FlxSprite);
-        set("FlxText",    FlxText);
-        set("FlxColor",   FlxColor);
-        set("FlxTween",   FlxTween);
-        set("FlxEase",    FlxEase);
-        set("FlxMath",    FlxMath);
+        // ==================== Flixel ====================
+        set("FlxG",      FlxG);
+        set("FlxSprite", FlxSprite);
+        set("FlxText",   FlxText);
+        set("FlxTween",  FlxTween);
+        set("FlxEase",   FlxEase);
+        set("FlxMath",   FlxMath);
 
-        // ---- Haxe stdlib ----
-        set("Math",       Math);
-        set("Std",        Std);
-        set("StringTools",StringTools);
-        set("Reflect",    Reflect);
-        set("Type",       Type);
-        set("Date",       Date);
-        set("Lambda",     Lambda);
+        // FlxColor é abstract — expõe via objeto anônimo
+        set("FlxColor", {
+            RED:          (FlxColor.RED         : Int),
+            GREEN:        (FlxColor.GREEN        : Int),
+            BLUE:         (FlxColor.BLUE         : Int),
+            WHITE:        (FlxColor.WHITE        : Int),
+            BLACK:        (FlxColor.BLACK        : Int),
+            YELLOW:       (FlxColor.YELLOW       : Int),
+            CYAN:         (FlxColor.CYAN         : Int),
+            MAGENTA:      (FlxColor.MAGENTA      : Int),
+            ORANGE:       (FlxColor.ORANGE       : Int),
+            PINK:         (FlxColor.PINK         : Int),
+            PURPLE:       (FlxColor.PURPLE       : Int),
+            GRAY:         (FlxColor.GRAY         : Int),
+            TRANSPARENT:  (FlxColor.TRANSPARENT  : Int),
+            fromRGB:      function(r:Int, g:Int, b:Int):Int
+                              return (FlxColor.fromRGB(r, g, b) : Int),
+            fromRGBFloat: function(r:Float, g:Float, b:Float):Int
+                              return (FlxColor.fromRGBFloat(r, g, b) : Int),
+            fromInt:      function(v:Int):Int
+                              return (FlxColor.fromInt(v) : Int),
+            interpolate:  function(a:Int, b:Int, t:Float):Int
+                              return (FlxColor.interpolate(a, b, t) : Int)
+        });
 
-        // ---- Helpers ----
+        // ==================== Haxe stdlib ====================
+        set("Math",        Math);
+        set("Std",         Std);
+        set("StringTools", StringTools);
+        set("Reflect",     Reflect);
+        set("Type",        Type);
+        set("Date",        Date);
+        set("Lambda",      Lambda);
+
+        // ==================== Trace / Print ====================
         set("trace", function(v:Dynamic)
         {
             var msg = Std.string(v);
-            if (onTrace != null)
-                onTrace(msg);
-            else
-                trace('[HScript] $msg');
+            if (onTrace != null) onTrace(msg);
+            else trace('[HScript] $msg');
         });
 
         set("print", function(v:Dynamic)
         {
             var msg = Std.string(v);
-            if (onTrace != null)
-                onTrace(msg);
-            else
-                trace('[HScript] $msg');
+            if (onTrace != null) onTrace(msg);
+            else trace('[HScript] $msg');
         });
-
-        // ---- Interop com o jogo ----
-        set("switchState", function(state:FlxState)
-        {
-            FlxG.switchState(state);
-        });
-
-        set("playSound", function(key:String, volume:Float = 1.0)
-        {
-            FlxG.sound.play(key, volume);
-        });
-
-        set("playMusic", function(key:String, volume:Float = 1.0)
-        {
-            FlxG.sound.playMusic(key, volume);
-        });
-
-        set("stopMusic", function()
-        {
-            if (FlxG.sound.music != null)
-                FlxG.sound.music.stop();
-        });
-
-        set("random", function(min:Float, max:Float):Float
-        {
-            return FlxG.random.float(min, max);
-        });
-
-        set("randomInt", function(min:Int, max:Int):Int
-        {
-            return FlxG.random.int(min, max);
-        });
-
-        set("lerp", function(a:Float, b:Float, t:Float):Float
-        {
-            return FlxMath.lerp(a, b, t);
-        });
-
-        set("colorFromRGB", function(r:Int, g:Int, b:Int):FlxColor
-        {
-            return FlxColor.fromRGB(r, g, b);
-        });
-
-        set("colorFromHex", function(hex:String):FlxColor
-        {
-            return frontend.JsonHelper.hexToColor(hex);
-        });
-
-        set("getWidth",  function() return FlxG.width);
-        set("getHeight", function() return FlxG.height);
 
         set("log", function(msg:String)
         {
             trace('[HScript:LOG] $msg');
         });
+
+        // ==================== Game helpers ====================
+        set("switchState", function(state:FlxState) FlxG.switchState(state));
+
+        set("playSound",  function(key:String, volume:Float = 1.0)
+            FlxG.sound.play(key, volume));
+
+        set("playMusic",  function(key:String, volume:Float = 1.0)
+            FlxG.sound.playMusic(key, volume));
+
+        set("stopMusic",  function()
+        {
+            if (FlxG.sound.music != null) FlxG.sound.music.stop();
+        });
+
+        set("getWidth",  function() return FlxG.width);
+        set("getHeight", function() return FlxG.height);
+
+        // ==================== Math helpers ====================
+        set("random",    function(min:Float, max:Float):Float  return FlxG.random.float(min, max));
+        set("randomInt", function(min:Int,   max:Int):Int      return FlxG.random.int(min, max));
+
+        set("lerp",      function(a:Float, b:Float, t:Float):Float return FlxMath.lerp(a, b, t));
+
+        set("lerpColor", function(a:Int, b:Int, t:Float):Int
+            return (FlxColor.interpolate(a, b, t) : Int));
+
+        set("colorFromRGB", function(r:Int, g:Int, b:Int):Int
+            return (FlxColor.fromRGB(r, g, b) : Int));
+
+        set("colorFromHex", function(hex:String):Int
+            return (frontend.JsonHelper.hexToColor(hex) : Int));
     }
 
     // ==================== Load ====================
 
-    /**
-     * Carrega e compila um script pelo caminho de asset.
-     */
     public function load(path:String):Bool
     {
         scriptPath = path;
@@ -169,24 +155,15 @@ class HScript
         lastError  = "";
 
         if (!Assets.exists(path))
-        {
-            setError('Script not found: $path');
-            return false;
-        }
+            return setError('Script not found: $path');
 
         var raw = Assets.getText(path);
         if (raw == null || raw.length == 0)
-        {
-            setError('Script is empty: $path');
-            return false;
-        }
+            return setError('Script is empty: $path');
 
         return loadFromString(raw, path);
     }
 
-    /**
-     * Carrega e compila um script a partir de uma string.
-     */
     public function loadFromString(code:String, label:String = "inline"):Bool
     {
         scriptPath = label;
@@ -194,7 +171,6 @@ class HScript
         hasError   = false;
         lastError  = "";
 
-        // Usa cache se disponível
         if (cache.exists(label))
         {
             ast      = cache.get(label);
@@ -210,8 +186,7 @@ class HScript
         }
         catch (e:Dynamic)
         {
-            setError('Parse error in $label: $e');
-            return false;
+            return setError('Parse error in $label: $e');
         }
 
         return true;
@@ -219,9 +194,6 @@ class HScript
 
     // ==================== Execute ====================
 
-    /**
-     * Executa o script carregado.
-     */
     public function execute():ScriptResult
     {
         if (!isLoaded || ast == null)
@@ -240,27 +212,21 @@ class HScript
         }
     }
 
-    /**
-     * Executa e retorna o valor tipado.
-     */
     public function executeTyped<T>():T
     {
         var result = execute();
-        if (!result.success) return null;
-        return cast result.value;
+        return result.success ? cast result.value : null;
     }
 
     // ==================== Function Calls ====================
 
-    /**
-     * Chama uma função definida no script.
-     */
     public function call(funcName:String, ?args:Array<Dynamic>):ScriptResult
     {
         if (!isLoaded)
             return { success: false, value: null, error: 'Script not loaded' };
 
         var func = interp.variables.get(funcName);
+
         if (func == null)
             return { success: false, value: null, error: 'Function not found: $funcName' };
 
@@ -280,9 +246,6 @@ class HScript
         }
     }
 
-    /**
-     * Verifica se uma função existe no script.
-     */
     public function hasFunction(funcName:String):Bool
     {
         if (!isLoaded) return false;
@@ -292,100 +255,56 @@ class HScript
 
     // ==================== Variables ====================
 
-    /**
-     * Define uma variável acessível pelo script.
-     */
     public function set(name:String, value:Dynamic):Void
-    {
         interp.variables.set(name, value);
-    }
 
-    /**
-     * Obtém o valor de uma variável do script.
-     */
     public function get(name:String):Dynamic
-    {
         return interp.variables.get(name);
-    }
 
-    /**
-     * Remove uma variável do escopo do script.
-     */
     public function unset(name:String):Void
-    {
         interp.variables.remove(name);
-    }
 
-    /**
-     * Verifica se uma variável existe no script.
-     */
     public function exists(name:String):Bool
-    {
         return interp.variables.exists(name);
-    }
 
     // ==================== State Injection ====================
 
-    /**
-     * Injeta referências de um FlxState no script.
-     */
     public function injectState(state:FlxState):Void
     {
-        set("state",     state);
-        set("add",       function(obj:Dynamic) state.add(obj));
-        set("remove",    function(obj:Dynamic) state.remove(obj));
-        set("openSub",   function(sub:Dynamic) state.openSubState(sub));
-        set("closeSub",  function()            state.closeSubState());
+        set("state",    state);
+        set("add",      function(obj:Dynamic) state.add(obj));
+        set("remove",   function(obj:Dynamic) state.remove(obj));
+        set("openSub",  function(sub:Dynamic) state.openSubState(sub));
+        set("closeSub", function()            state.closeSubState());
     }
 
-    /**
-     * Injeta um objeto com um nome no escopo.
-     */
     public function injectObject(name:String, obj:Dynamic):Void
     {
         set(name, obj);
-
-        // Expõe campos públicos do objeto diretamente
         for (field in Reflect.fields(obj))
         {
             var val = Reflect.field(obj, field);
-            if (val != null)
-                set('${name}_$field', val);
+            if (val != null) set('${name}_$field', val);
         }
     }
 
-    // ==================== Lifecycle Hooks ====================
+    // ==================== Lifecycle ====================
 
-    /**
-     * Chama onCreate() se existir no script.
-     */
     public function onCreate():Void
     {
-        if (hasFunction("onCreate"))
-            call("onCreate");
+        if (hasFunction("onCreate")) call("onCreate");
     }
 
-    /**
-     * Chama onUpdate(elapsed) se existir no script.
-     */
     public function onUpdate(elapsed:Float):Void
     {
-        if (hasFunction("onUpdate"))
-            call("onUpdate", [elapsed]);
+        if (hasFunction("onUpdate")) call("onUpdate", [elapsed]);
     }
 
-    /**
-     * Chama onDestroy() se existir no script.
-     */
     public function onDestroy():Void
     {
-        if (hasFunction("onDestroy"))
-            call("onDestroy");
+        if (hasFunction("onDestroy")) call("onDestroy");
     }
 
-    /**
-     * Chama um hook genérico pelo nome.
-     */
     public function callHook(name:String, ?args:Array<Dynamic>):Dynamic
     {
         if (!hasFunction(name)) return null;
@@ -393,29 +312,24 @@ class HScript
         return result.success ? result.value : null;
     }
 
-    // ==================== Error Handling ====================
+    // ==================== Error ====================
 
-    function setError(msg:String):Void
+    function setError(msg:String):Bool
     {
         hasError  = true;
         lastError = msg;
         trace('[HScript:ERROR] $msg');
-
-        if (onError != null)
-            onError(msg);
+        if (onError != null) onError(msg);
+        return false;
     }
 
-    // ==================== Static Helpers ====================
+    // ==================== Static ====================
 
-    /**
-     * Cria e executa um script inline rapidamente.
-     */
     public static function run(code:String, ?vars:Map<String, Dynamic>):ScriptResult
     {
         var hs = new HScript();
         if (vars != null)
-            for (k => v in vars)
-                hs.set(k, v);
+            for (k => v in vars) hs.set(k, v);
 
         if (!hs.loadFromString(code))
             return { success: false, value: null, error: hs.lastError };
@@ -423,15 +337,11 @@ class HScript
         return hs.execute();
     }
 
-    /**
-     * Executa um script de arquivo rapidamente.
-     */
     public static function runFile(path:String, ?vars:Map<String, Dynamic>):ScriptResult
     {
         var hs = new HScript();
         if (vars != null)
-            for (k => v in vars)
-                hs.set(k, v);
+            for (k => v in vars) hs.set(k, v);
 
         if (!hs.load(path))
             return { success: false, value: null, error: hs.lastError };
@@ -439,19 +349,9 @@ class HScript
         return hs.execute();
     }
 
-    /**
-     * Limpa o cache de scripts compilados.
-     */
     public static function clearCache():Void
-    {
         cache.clear();
-    }
 
-    /**
-     * Remove um script específico do cache.
-     */
     public static function removeFromCache(path:String):Void
-    {
         cache.remove(path);
-    }
 }
