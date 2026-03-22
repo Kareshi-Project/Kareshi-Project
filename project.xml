@@ -1,18 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project>
 
-    <!-- ==================== Project Info ==================== -->
+    <!-- ============================================================
+         PROJECT METADATA
+         Defines the game's identity for packaging and distribution.
+         versionCode must be incremented on every release build.
+    ============================================================ -->
     <meta title="Kareshi Project"
           package="com.kareshiproject.game"
           version="0.0.2"
           company="Kareshi Project Team" />
 
-    <!-- ==================== Application ==================== -->
+    <!-- ============================================================
+         APPLICATION ENTRY POINT
+         'main'  — root class with the public static main() function.
+         'file'  — output binary/APK filename (no extension).
+         'path'  — root export directory; platform subdirs are appended.
+    ============================================================ -->
     <app main="Main"
          file="KareshiProject"
          path="export" />
 
-    <!-- ==================== Window ==================== -->
+    <!-- ============================================================
+         WINDOW CONFIGURATION
+         Desktop: fixed 1280x720, 60 FPS, VSync on, non-resizable.
+         Mobile:  overrides to fullscreen + landscape lock at runtime.
+         'vsync'  eliminates screen tearing at the cost of input latency.
+    ============================================================ -->
     <window width="1280"
             height="720"
             fps="60"
@@ -20,62 +34,212 @@
             vsync="true"
             resizable="false" />
 
-    <!-- Mobile: fullscreen + lock orientation -->
-    <window fullscreen="true" if="mobile" />
-    <window orientation="landscape" if="mobile" />
+    <!-- Mobile overrides — only compiled when targeting mobile -->
+    <window fullscreen="true"          if="mobile" />
+    <window orientation="landscape"    if="mobile" />
 
-    <!-- ==================== Icon ==================== -->
+    <!-- ============================================================
+         GAME ICON
+         Used for the executable icon (Windows/Linux/macOS) and the
+         launcher icon on Android/iOS.
+    ============================================================ -->
     <icon path="arts/icon.png" />
 
-    <!-- ==================== Source ==================== -->
+    <!-- ============================================================
+         SOURCE ROOT
+         All .hx files under this directory are compiled recursively.
+    ============================================================ -->
     <source path="source" />
 
-    <!-- ==================== Libraries ==================== -->
-    <haxelib name="hxcpp" />
-    <haxelib name="hscript" />
-    <haxelib name="polymod" />
-    <haxelib name="lime" />
-    <haxelib name="openfl" />
-    <haxelib name="flixel" />
-    <haxelib name="flixel-ui" />
-    <haxelib name="flixel-addons" />
-    <haxelib name="hxdiscord_rpc" if="desktop" />
+    <!-- ============================================================
+         HAXE LIBRARIES
+         Order matters: dependencies must appear before dependents.
+         Platform-conditional libs use if/unless attributes.
+    ============================================================ -->
 
-    <!-- Android-only extension -->
+    <!-- Core runtime -->
+    <haxelib name="hxcpp"           />
+    <haxelib name="lime"            />
+    <haxelib name="openfl"          />
+
+    <!-- Game framework -->
+    <haxelib name="flixel"          />
+    <haxelib name="flixel-ui"       />
+    <haxelib name="flixel-addons"   />
+
+    <!-- Scripting & modding -->
+    <haxelib name="hscript"         />
+    <haxelib name="polymod"         />
+
+    <!-- Android-only: native JNI extensions (vibration, etc.) -->
     <haxelib name="extension-androidtools" if="android" />
 
-    <!-- ==================== Assets ==================== -->
-    <assets path="assets/images" rename="images" include="*" />
-    <assets path="assets/sounds" rename="sounds" />
-    <assets path="assets/music"  rename="music" />
-    <assets path="assets/data" rename="data" include="*" recursive="true" />
+    <!-- Desktop-only: Discord Rich Presence SDK wrapper -->
+    <haxelib name="hxdiscord_rpc"          if="desktop" />
 
-    <!-- ==================== Build Flags ==================== -->
-    <!-- Debug builds -->
-    <haxeflag name="-debug" if="debug" />
+    <!-- ============================================================
+         ASSET PIPELINE
+         Assets are remapped to short virtual paths at compile time.
+         'include="*"' ensures subdirectories are traversed.
+         'recursive="true"' on data/ is required for nested JSON dirs
+         (stages/, characters/, scripts/, etc.).
+    ============================================================ -->
+    <assets path="assets/images" rename="images" include="*"                  />
+    <assets path="assets/sounds" rename="sounds" include="*"                  />
+    <assets path="assets/music"  rename="music"  include="*"                  />
+    <assets path="assets/data"   rename="data"   include="*" recursive="true" />
+
+    <!-- ============================================================
+         MODS DIRECTORY
+         Polymod manages the mods/ folder at runtime via the
+         filesystem. Including it here ensures the directory is
+         present in the export tree on desktop builds.
+         Mobile mods are not supported in this version — Polymod
+         requires writable filesystem access unavailable on Android
+         without root or special permissions.
+
+         Expected runtime layout:
+           <binary>/mods/
+             <mod_id>/
+               _polymod_meta.json    (required)
+               _polymod_icon.png     (optional)
+               scripts/
+                 mod_init.hscript    (optional lifecycle hooks)
+               assets/
+                 images/             (PNG overrides)
+                 music/              (OGG overrides)
+                 data/               (JSON merges or overrides)
+    ============================================================ -->
+    <assets path="mods" rename="mods" include="*" recursive="true" if="desktop" />
+
+    <!-- ============================================================
+         COMPILE-TIME DEFINES
+         Accessible in Haxe via #if / Context.definedValue().
+    ============================================================ -->
+
+    <!-- Game identity — consumed by PolyMod.hx and global.hscript -->
+    <define name="GAME_VERSION" value="0.0.2" />
+    <define name="GAME_ID"      value="kareshi-project" />
+    <define name="MOD_API"      value="0.0.2" />
+
+    <!-- Build variant flags -->
+    <define name="BUILD_DEBUG"   if="debug"   />
+    <define name="BUILD_RELEASE" unless="debug" />
+
+    <!-- Polymod backend flags
+         POLYMOD_OPENFL_FIRESYSTEM — use OpenFL's Assets as the VFS layer.
+         POLYMOD_USE_LIME          — delegate low-level I/O to Lime.
+         POLYMOD_DEBUG             — enable verbose Polymod logging in debug builds. -->
+    <define name="POLYMOD_OPENFL_FIRESYSTEM" />
+    <define name="POLYMOD_USE_LIME"          />
+    <define name="POLYMOD_DEBUG"             if="debug" />
+
+    <!-- HScript: allow import statements inside .hscript files -->
+    <define name="HSCRIPT_ALLOWED_IMPORTS" />
+
+    <!-- FlixelHaxeFlixel feature toggles
+         Disabling unused input modules on mobile reduces binary size
+         and eliminates the FlxG.keys / FlxG.mouse null-access risk. -->
+    <define name="FLX_NO_MOUSE"            if="mobile" />
+    <define name="FLX_NO_KEYBOARD"         if="mobile" />
+
+    <!-- Debug-only: suppress the Flixel focus-lost grey screen -->
     <define name="FLX_NO_FOCUS_LOST_SCREEN" if="debug" />
 
-    <!-- Disable unused Flixel features to reduce APK size -->
-    <define name="FLX_NO_MOUSE"   if="mobile" />
-    <define name="FLX_NO_KEYBOARD" if="mobile" />
+    <!-- ============================================================
+         HAXE COMPILER FLAGS
+         Applied after library resolution; affect the Haxe compiler
+         directly rather than OpenFL/Lime's project model.
+    ============================================================ -->
 
-    <!-- ==================== Android ==================== -->
+    <!-- Enable debug symbols and DCE-safe output -->
+    <haxeflag name="-debug"          if="debug" />
+
+    <!-- Haxe 4 compatibility guarantee -->
+    <haxeflag name="-D" value="haxe4" />
+
+    <!-- Emit warnings for potential null-safety violations -->
+    <haxeflag name="--warning" value="WNullSafety" />
+
+    <!-- ============================================================
+         ANDROID CONFIGURATION
+         Two <android> blocks allow different apkFileName values
+         for debug and release builds without conditional scripting.
+         versionCode must be a monotonically increasing integer;
+         increment it with every public release.
+    ============================================================ -->
+
+    <!-- Debug build -->
     <android package="com.kareshiproject.game"
-             versionCode="1"
+             versionCode="2"
              versionName="0.0.2"
              minSdkVersion="21"
-             targetSdkVersion="33"
+             targetSdkVersion="35"
+             orientation="landscape"
+             screenOrientation="landscape"
+             appLabel="Kareshi Project"
+             apkFileName="KareshiProject-debug.apk"
+             allowBackup="false"
+             supportsRtl="false"
+             if="debug" />
+
+    <!-- Release build -->
+    <android package="com.kareshiproject.game"
+             versionCode="2"
+             versionName="0.0.2"
+             minSdkVersion="21"
+             targetSdkVersion="35"
              orientation="landscape"
              screenOrientation="landscape"
              appLabel="Kareshi Project"
              apkFileName="KareshiProject-release.apk"
              allowBackup="false"
-             supportsRtl="false" />
+             supportsRtl="false"
+             unless="debug" />
 
-    <!-- Android permissions -->
-    <android permission="android.permission.VIBRATE" />
+    <!-- Android permissions
+         VIBRATE              — haptic feedback via extension-androidtools.
+         INTERNET             — future: leaderboards, update checks, telemetry.
+         ACCESS_NETWORK_STATE — check connectivity before network calls.
+         READ_EXTERNAL_STORAGE — allows loading mods from external storage
+                                  on Android < 13 (API 32 and below).
+                                  On API 33+ this is replaced by granular
+                                  media permissions; no action needed here. -->
+    <android permission="android.permission.VIBRATE"               />
+    <android permission="android.permission.INTERNET"              />
+    <android permission="android.permission.ACCESS_NETWORK_STATE"  />
+    <android permission="android.permission.READ_EXTERNAL_STORAGE" if="android" />
 
-    <!-- ==================== iOS (future) ==================== -->
+    <!-- Gradle toolchain versions
+         gradle-version   — wrapper version used by gradlew.
+         gradle-plugin    — Android Gradle Plugin (AGP) version.
+         build-tools      — AAPT2 / dx / d8 version.
+         compile-sdk      — SDK jar used for compilation (not the min/target).
+         These versions must be mutually compatible. Current set is
+         validated against NDK r21e (21.4.7075529). -->
+    <config:android gradle-version="7.4.2"   gradle-plugin="7.3.1" if="android" />
+    <config:android build-tools-version="35.0.0"                   if="android" />
+    <config:android compile-sdk-version="35"                       if="android" />
+
+    <!-- Gradle assembly targets -->
+    <config:android assemble-debug="true"   if="debug"   />
+    <config:android assemble-release="true" unless="debug" />
+
+    <!-- ============================================================
+         iOS CONFIGURATION (future target)
+         deployment="12" — minimum iOS version; covers ~99% of active
+         devices as of 2024. Update when dropping older device support.
+    ============================================================ -->
     <ios deployment="12" />
+
+    <!-- ============================================================
+         DESKTOP PLATFORM METADATA
+    ============================================================ -->
+
+    <!-- Windows: embed the game icon in the PE executable -->
+    <config:windows icon="arts/icon.png" if="windows" />
+
+    <!-- Linux: .desktop file application category -->
+    <config:linux category="Game" if="linux" />
 
 </project>
