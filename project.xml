@@ -33,6 +33,7 @@
     <!-- ==================== Libraries ==================== -->
     <haxelib name="hxcpp" />
     <haxelib name="hscript" />
+    <haxelib name="polymod" />
     <haxelib name="lime" />
     <haxelib name="openfl" />
     <haxelib name="flixel" />
