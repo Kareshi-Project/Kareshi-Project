@@ -1,0 +1,10 @@
+{
+  "id":           "my_first_mod",
+  "title":        "My First Mod",
+  "description":  "Replaces the title background.",
+  "author":       "YourName",
+  "version":      "1.0.0",
+  "api_version":  "0.0.2",
+  "homepage":     "https://github.com/you/my_first_mod",
+  "dependencies": []
+}
