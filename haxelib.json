@@ -25,6 +25,7 @@
   "dependencies": {
     "hxcpp": "",
     "hscript": "",
+    "polymod": "",
     "lime": "",
     "openfl": "",
     "flixel": "",
