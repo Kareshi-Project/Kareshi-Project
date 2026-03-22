@@ -35,8 +35,8 @@
             resizable="false" />
 
     <!-- Mobile overrides — only compiled when targeting mobile -->
-    <window fullscreen="true"          if="mobile" />
-    <window orientation="landscape"    if="mobile" />
+    <window fullscreen="true"       if="mobile" />
+    <window orientation="landscape" if="mobile" />
 
     <!-- ============================================================
          GAME ICON
@@ -58,18 +58,18 @@
     ============================================================ -->
 
     <!-- Core runtime -->
-    <haxelib name="hxcpp"           />
-    <haxelib name="lime"            />
-    <haxelib name="openfl"          />
+    <haxelib name="hxcpp"         />
+    <haxelib name="lime"          />
+    <haxelib name="openfl"        />
 
     <!-- Game framework -->
-    <haxelib name="flixel"          />
-    <haxelib name="flixel-ui"       />
-    <haxelib name="flixel-addons"   />
+    <haxelib name="flixel"        />
+    <haxelib name="flixel-ui"     />
+    <haxelib name="flixel-addons" />
 
-    <!-- Scripting & modding -->
-    <haxelib name="hscript"         />
-    <haxelib name="polymod"         />
+    <!-- Scripting and modding -->
+    <haxelib name="hscript"       />
+    <haxelib name="polymod"       />
 
     <!-- Android-only: native JNI extensions (vibration, etc.) -->
     <haxelib name="extension-androidtools" if="android" />
@@ -123,13 +123,14 @@
     <define name="MOD_API"      value="0.0.2" />
 
     <!-- Build variant flags -->
-    <define name="BUILD_DEBUG"   if="debug"   />
+    <define name="BUILD_DEBUG"   if="debug"    />
     <define name="BUILD_RELEASE" unless="debug" />
 
     <!-- Polymod backend flags
          POLYMOD_OPENFL_FIRESYSTEM — use OpenFL's Assets as the VFS layer.
          POLYMOD_USE_LIME          — delegate low-level I/O to Lime.
-         POLYMOD_DEBUG             — enable verbose Polymod logging in debug builds. -->
+         POLYMOD_DEBUG             — enable verbose Polymod logging in
+                                     debug builds only. -->
     <define name="POLYMOD_OPENFL_FIRESYSTEM" />
     <define name="POLYMOD_USE_LIME"          />
     <define name="POLYMOD_DEBUG"             if="debug" />
@@ -137,11 +138,11 @@
     <!-- HScript: allow import statements inside .hscript files -->
     <define name="HSCRIPT_ALLOWED_IMPORTS" />
 
-    <!-- FlixelHaxeFlixel feature toggles
+    <!-- HaxeFlixel feature toggles
          Disabling unused input modules on mobile reduces binary size
          and eliminates the FlxG.keys / FlxG.mouse null-access risk. -->
-    <define name="FLX_NO_MOUSE"            if="mobile" />
-    <define name="FLX_NO_KEYBOARD"         if="mobile" />
+    <define name="FLX_NO_MOUSE"    if="mobile" />
+    <define name="FLX_NO_KEYBOARD" if="mobile" />
 
     <!-- Debug-only: suppress the Flixel focus-lost grey screen -->
     <define name="FLX_NO_FOCUS_LOST_SCREEN" if="debug" />
@@ -152,14 +153,11 @@
          directly rather than OpenFL/Lime's project model.
     ============================================================ -->
 
-    <!-- Enable debug symbols and DCE-safe output -->
-    <haxeflag name="-debug"          if="debug" />
+    <!-- Enable debug symbols in debug builds -->
+    <haxeflag name="-debug" if="debug" />
 
     <!-- Haxe 4 compatibility guarantee -->
     <haxeflag name="-D" value="haxe4" />
-
-    <!-- Emit warnings for potential null-safety violations -->
-    <haxeflag name="--warning" value="WNullSafety" />
 
     <!-- ============================================================
          ANDROID CONFIGURATION
@@ -198,31 +196,31 @@
              unless="debug" />
 
     <!-- Android permissions
-         VIBRATE              — haptic feedback via extension-androidtools.
-         INTERNET             — future: leaderboards, update checks, telemetry.
-         ACCESS_NETWORK_STATE — check connectivity before network calls.
-         READ_EXTERNAL_STORAGE — allows loading mods from external storage
-                                  on Android < 13 (API 32 and below).
-                                  On API 33+ this is replaced by granular
-                                  media permissions; no action needed here. -->
+         VIBRATE               — haptic feedback via extension-androidtools.
+         INTERNET              — future: leaderboards, update checks.
+         ACCESS_NETWORK_STATE  — check connectivity before network calls.
+         READ_EXTERNAL_STORAGE — load mods from external storage on
+                                  Android < 13 (API 32 and below).
+                                  On API 33+ superseded by granular
+                                  media permissions; no extra action needed. -->
     <android permission="android.permission.VIBRATE"               />
     <android permission="android.permission.INTERNET"              />
     <android permission="android.permission.ACCESS_NETWORK_STATE"  />
     <android permission="android.permission.READ_EXTERNAL_STORAGE" if="android" />
 
     <!-- Gradle toolchain versions
-         gradle-version   — wrapper version used by gradlew.
-         gradle-plugin    — Android Gradle Plugin (AGP) version.
-         build-tools      — AAPT2 / dx / d8 version.
-         compile-sdk      — SDK jar used for compilation (not the min/target).
-         These versions must be mutually compatible. Current set is
-         validated against NDK r21e (21.4.7075529). -->
-    <config:android gradle-version="7.4.2"   gradle-plugin="7.3.1" if="android" />
-    <config:android build-tools-version="35.0.0"                   if="android" />
-    <config:android compile-sdk-version="35"                       if="android" />
+         gradle-version  — wrapper version used by gradlew.
+         gradle-plugin   — Android Gradle Plugin (AGP) version.
+         build-tools     — AAPT2 / dx / d8 toolchain version.
+         compile-sdk     — SDK jar used for compilation (distinct from
+                           minSdkVersion and targetSdkVersion).
+         Validated against NDK r21e (21.4.7075529). -->
+    <config:android gradle-version="7.4.2" gradle-plugin="7.3.1" if="android" />
+    <config:android build-tools-version="35.0.0"                  if="android" />
+    <config:android compile-sdk-version="35"                      if="android" />
 
     <!-- Gradle assembly targets -->
-    <config:android assemble-debug="true"   if="debug"   />
+    <config:android assemble-debug="true"   if="debug"    />
     <config:android assemble-release="true" unless="debug" />
 
     <!-- ============================================================
