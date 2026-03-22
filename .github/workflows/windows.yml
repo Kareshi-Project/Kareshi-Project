@@ -33,6 +33,7 @@ jobs:
         run: |
           haxelib install hxcpp --quiet
           haxelib install hscript --quiet
+          haxelib install polymod --quiet
           haxelib install lime --quiet
           haxelib install openfl --quiet
           haxelib install flixel --quiet
