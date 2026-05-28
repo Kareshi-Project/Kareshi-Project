@@ -1,0 +1,128 @@
+import hxp.*;
+
+class Build extends Script {
+    public function new() {
+        super();
+
+        meta.title   = "Kareshi Project";
+        meta.packageName = "com.kareshiproject.game";
+        meta.version = "0.0.2";
+        meta.company = "Kareshi Project Team";
+
+        app.main = "Main";
+        app.file = "KareshiProject";
+        app.path = "export";
+
+        window.width      = 1280;
+        window.height     = 720;
+        window.fps        = 60;
+        window.background = 0x000000;
+        window.vsync      = true;
+        window.resizable  = false;
+
+        if (targetFlags.exists("mobile")) {
+            window.fullscreen   = true;
+            window.orientation  = Orientation.LANDSCAPE;
+        }
+
+        setIcon("arts/icon.png");
+
+        sources.push("source");
+
+        addHaxelib("hxcpp");
+        addHaxelib("lime");
+        addHaxelib("openfl");
+        addHaxelib("flixel");
+        addHaxelib("flixel-ui");
+        addHaxelib("flixel-addons");
+        addHaxelib("hscript");
+        addHaxelib("polymod");
+
+        if (targetFlags.exists("android"))
+            addHaxelib("extension-androidtools");
+
+        if (targetFlags.exists("desktop"))
+            addHaxelib("hxdiscord_rpc");
+
+        addAssets("assets/images", { rename: "images" });
+        addAssets("assets/sounds", { rename: "sounds" });
+        addAssets("assets/music",  { rename: "music"  });
+        addAssets("assets/data",   { rename: "data", recursive: true });
+
+        if (targetFlags.exists("desktop"))
+            addAssets("mods", { rename: "mods", recursive: true });
+
+        defines.set("GAME_VERSION", "0.0.2");
+        defines.set("GAME_ID",      "kareshi-project");
+        defines.set("MOD_API",      "0.0.2");
+
+        defines.set("POLYMOD_OPENFL_FIRESYSTEM", "1");
+        defines.set("POLYMOD_USE_LIME",           "1");
+        defines.set("HSCRIPT_ALLOWED_IMPORTS",    "1");
+
+        if (debug) {
+            defines.set("BUILD_DEBUG",              "1");
+            defines.set("POLYMOD_DEBUG",            "1");
+            defines.set("FLX_NO_FOCUS_LOST_SCREEN", "1");
+            haxeflags.push("-debug");
+        } else {
+            defines.set("BUILD_RELEASE", "1");
+        }
+
+        if (targetFlags.exists("mobile")) {
+            defines.set("FLX_NO_MOUSE",    "1");
+            defines.set("FLX_NO_KEYBOARD", "1");
+        }
+
+        haxeflags.push("-D haxe4");
+
+        setupAndroid();
+        setupIOS();
+        setupDesktop();
+    }
+
+    function setupAndroid():Void {
+        if (!targetFlags.exists("android")) return;
+
+        var apkName = debug ? "KareshiProject-debug.apk" : "KareshiProject-release.apk";
+
+        android.packageName        = "com.kareshiproject.game";
+        android.versionCode        = 2;
+        android.versionName        = "0.0.2";
+        android.minSdkVersion      = 21;
+        android.targetSdkVersion   = 35;
+        android.orientation        = "landscape";
+        android.screenOrientation  = "landscape";
+        android.appLabel           = "Kareshi Project";
+        android.apkFileName        = apkName;
+        android.allowBackup        = false;
+        android.supportsRtl        = false;
+
+        addAndroidPermission("android.permission.VIBRATE");
+        addAndroidPermission("android.permission.INTERNET");
+        addAndroidPermission("android.permission.ACCESS_NETWORK_STATE");
+        addAndroidPermission("android.permission.READ_EXTERNAL_STORAGE");
+
+        androidConfig.gradleVersion      = "7.4.2";
+        androidConfig.gradlePluginVersion = "7.3.1";
+        androidConfig.buildToolsVersion  = "35.0.0";
+        androidConfig.compileSdkVersion  = 35;
+
+        if (debug)
+            androidConfig.assembleDebug   = true;
+        else
+            androidConfig.assembleRelease = true;
+    }
+
+    function setupIOS():Void {
+        ios.deployment = 12;
+    }
+
+    function setupDesktop():Void {
+        if (targetFlags.exists("windows"))
+            windowsConfig.icon = "arts/icon.png";
+
+        if (targetFlags.exists("linux"))
+            linuxConfig.category = "Game";
+    }
+}
