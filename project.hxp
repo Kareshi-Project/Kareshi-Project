@@ -4,125 +4,133 @@ class Build extends Script {
     public function new() {
         super();
 
-        meta.title   = "Kareshi Project";
-        meta.packageName = "com.kareshiproject.game";
-        meta.version = "0.0.2";
-        meta.company = "Kareshi Project Team";
+        var isAndroid = defines.exists("android");
+        var isDesktop = defines.exists("desktop");
+        var isMobile  = defines.exists("mobile");
+        var isWindows = defines.exists("windows");
+        var isLinux   = defines.exists("linux");
+        var isDebug   = defines.exists("debug");
 
-        app.main = "Main";
-        app.file = "KareshiProject";
-        app.path = "export";
+        project.meta.title       = "Kareshi Project";
+        project.meta.packageName = "com.kareshiproject.game";
+        project.meta.version     = "0.0.2";
+        project.meta.company     = "Kareshi Project Team";
+        project.meta.buildNumber = "2";
 
-        window.width      = 1280;
-        window.height     = 720;
-        window.fps        = 60;
-        window.background = 0x000000;
-        window.vsync      = true;
-        window.resizable  = false;
+        project.app.main    = "Main";
+        project.app.file    = "KareshiProject";
+        project.app.path    = "export";
+        project.app.swfVersion = 17;
 
-        if (targetFlags.exists("mobile")) {
-            window.fullscreen   = true;
-            window.orientation  = Orientation.LANDSCAPE;
+        project.window.width      = 1280;
+        project.window.height     = 720;
+        project.window.fps        = 60;
+        project.window.background = 0x000000;
+        project.window.vsync      = true;
+        project.window.resizable  = false;
+
+        if (isMobile) {
+            project.window.fullscreen  = true;
+            project.window.orientation = Orientation.LANDSCAPE;
         }
 
-        setIcon("arts/icon.png");
+        project.icons.push(new Icon("arts/icon.png"));
 
-        sources.push("source");
+        project.sources.push("source");
 
-        addHaxelib("hxcpp");
-        addHaxelib("lime");
-        addHaxelib("openfl");
-        addHaxelib("flixel");
-        addHaxelib("flixel-ui");
-        addHaxelib("flixel-addons");
-        addHaxelib("hscript");
-        addHaxelib("polymod");
+        addLib("hxcpp");
+        addLib("lime");
+        addLib("openfl");
+        addLib("flixel");
+        addLib("flixel-ui");
+        addLib("flixel-addons");
+        addLib("hscript");
+        addLib("polymod");
 
-        if (targetFlags.exists("android"))
-            addHaxelib("extension-androidtools");
+        if (isAndroid) addLib("extension-androidtools");
+        if (isDesktop) addLib("hxdiscord_rpc");
 
-        if (targetFlags.exists("desktop"))
-            addHaxelib("hxdiscord_rpc");
+        project.assets.push(new Assets("assets/images", "images"));
+        project.assets.push(new Assets("assets/sounds", "sounds"));
+        project.assets.push(new Assets("assets/music",  "music"));
 
-        addAssets("assets/images", { rename: "images" });
-        addAssets("assets/sounds", { rename: "sounds" });
-        addAssets("assets/music",  { rename: "music"  });
-        addAssets("assets/data",   { rename: "data", recursive: true });
+        var dataAssets = new Assets("assets/data", "data");
+        dataAssets.recursive = true;
+        project.assets.push(dataAssets);
 
-        if (targetFlags.exists("desktop"))
-            addAssets("mods", { rename: "mods", recursive: true });
+        if (isDesktop) {
+            var modAssets = new Assets("mods", "mods");
+            modAssets.recursive = true;
+            project.assets.push(modAssets);
+        }
 
-        defines.set("GAME_VERSION", "0.0.2");
-        defines.set("GAME_ID",      "kareshi-project");
-        defines.set("MOD_API",      "0.0.2");
+        setDefine("GAME_VERSION",              "0.0.2");
+        setDefine("GAME_ID",                   "kareshi-project");
+        setDefine("MOD_API",                   "0.0.2");
+        setDefine("POLYMOD_OPENFL_FIRESYSTEM", "1");
+        setDefine("POLYMOD_USE_LIME",          "1");
+        setDefine("HSCRIPT_ALLOWED_IMPORTS",   "1");
 
-        defines.set("POLYMOD_OPENFL_FIRESYSTEM", "1");
-        defines.set("POLYMOD_USE_LIME",           "1");
-        defines.set("HSCRIPT_ALLOWED_IMPORTS",    "1");
-
-        if (debug) {
-            defines.set("BUILD_DEBUG",              "1");
-            defines.set("POLYMOD_DEBUG",            "1");
-            defines.set("FLX_NO_FOCUS_LOST_SCREEN", "1");
-            haxeflags.push("-debug");
+        if (isDebug) {
+            setDefine("BUILD_DEBUG",              "1");
+            setDefine("POLYMOD_DEBUG",            "1");
+            setDefine("FLX_NO_FOCUS_LOST_SCREEN", "1");
+            project.haxeflags.push("-debug");
         } else {
-            defines.set("BUILD_RELEASE", "1");
+            setDefine("BUILD_RELEASE", "1");
         }
 
-        if (targetFlags.exists("mobile")) {
-            defines.set("FLX_NO_MOUSE",    "1");
-            defines.set("FLX_NO_KEYBOARD", "1");
+        if (isMobile) {
+            setDefine("FLX_NO_MOUSE",    "1");
+            setDefine("FLX_NO_KEYBOARD", "1");
         }
 
-        haxeflags.push("-D haxe4");
+        project.haxeflags.push("-D haxe4");
 
-        setupAndroid();
-        setupIOS();
-        setupDesktop();
+        if (isAndroid) setupAndroid(isDebug);
+        if (isWindows) setupWindows();
+        if (isLinux)   setupLinux();
+
+        project.ios.deployment = 12;
     }
 
-    function setupAndroid():Void {
-        if (!targetFlags.exists("android")) return;
-
-        var apkName = debug ? "KareshiProject-debug.apk" : "KareshiProject-release.apk";
-
-        android.packageName        = "com.kareshiproject.game";
-        android.versionCode        = 2;
-        android.versionName        = "0.0.2";
-        android.minSdkVersion      = 21;
-        android.targetSdkVersion   = 35;
-        android.orientation        = "landscape";
-        android.screenOrientation  = "landscape";
-        android.appLabel           = "Kareshi Project";
-        android.apkFileName        = apkName;
-        android.allowBackup        = false;
-        android.supportsRtl        = false;
-
-        addAndroidPermission("android.permission.VIBRATE");
-        addAndroidPermission("android.permission.INTERNET");
-        addAndroidPermission("android.permission.ACCESS_NETWORK_STATE");
-        addAndroidPermission("android.permission.READ_EXTERNAL_STORAGE");
-
-        androidConfig.gradleVersion      = "7.4.2";
-        androidConfig.gradlePluginVersion = "7.3.1";
-        androidConfig.buildToolsVersion  = "35.0.0";
-        androidConfig.compileSdkVersion  = 35;
-
-        if (debug)
-            androidConfig.assembleDebug   = true;
-        else
-            androidConfig.assembleRelease = true;
+    function addLib(name:String):Void {
+        project.haxelibs.push(new Haxelib(name));
     }
 
-    function setupIOS():Void {
-        ios.deployment = 12;
+    function setDefine(name:String, value:String):Void {
+        project.defines.push(new Define(name, value));
     }
 
-    function setupDesktop():Void {
-        if (targetFlags.exists("windows"))
-            windowsConfig.icon = "arts/icon.png";
+    function setupAndroid(isDebug:Bool):Void {
+        project.android.minSdkVersion    = 21;
+        project.android.targetSdkVersion = 35;
 
-        if (targetFlags.exists("linux"))
-            linuxConfig.category = "Game";
+        project.androidPermissions.push(new AndroidPermission("android.permission.VIBRATE"));
+        project.androidPermissions.push(new AndroidPermission("android.permission.INTERNET"));
+        project.androidPermissions.push(new AndroidPermission("android.permission.ACCESS_NETWORK_STATE"));
+        project.androidPermissions.push(new AndroidPermission("android.permission.READ_EXTERNAL_STORAGE"));
+
+        project.config.set("android.gradle-version",       "7.4.2");
+        project.config.set("android.gradle-plugin",        "7.3.1");
+        project.config.set("android.build-tools-version",  "35.0.0");
+        project.config.set("android.compile-sdk-version",  "35");
+
+        if (isDebug) {
+            project.meta.buildNumber = "2";
+            project.config.set("android.assemble-debug",   "true");
+            project.config.set("android.apk-file-name",    "KareshiProject-debug.apk");
+        } else {
+            project.config.set("android.assemble-release", "true");
+            project.config.set("android.apk-file-name",    "KareshiProject-release.apk");
+        }
+    }
+
+    function setupWindows():Void {
+        project.config.set("windows.icon", "arts/icon.png");
+    }
+
+    function setupLinux():Void {
+        project.config.set("linux.category", "Game");
     }
 }
