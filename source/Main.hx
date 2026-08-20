@@ -8,15 +8,19 @@ import menus.TitleState;
 import backend.debug.DebugDisplay;
 import scripting.HScript;
 
+#if desktop
+import polymod.Polymod;
+import polymod.Polymod.PolymodError;
+import sys.FileSystem;
+#end
+
 class Main extends Sprite
 {
-    // ==================== Game Config ====================
-
-    static final GAME_WIDTH:Int  = 1280;
-    static final GAME_HEIGHT:Int = 720;
-    static final TARGET_FPS:Int  = 60;
-
-    // ==================== State ====================
+    static final GAME_WIDTH:Int      = 1280;
+    static final GAME_HEIGHT:Int     = 720;
+    static final TARGET_FPS:Int      = 60;
+    static final GAME_VERSION:String = "0.0.2";
+    static final MOD_API:String      = "0.0.2";
 
     var globalScript:HScript = null;
     var scriptReady:Bool     = false;
@@ -26,11 +30,13 @@ class Main extends Sprite
     var debugReady:Bool = false;
     #end
 
-    // ==================== Constructor ====================
-
     public function new()
     {
         super();
+
+        #if desktop
+        initPolymod();
+        #end
 
         var game = new FlxGame(
             GAME_WIDTH,
@@ -38,26 +44,52 @@ class Main extends Sprite
             TitleState,
             TARGET_FPS,
             TARGET_FPS,
-            true  // skipSplash
+            true
         );
         addChild(game);
 
-        // Aguarda o primeiro frame para que FlxG.state esteja pronto
         game.addEventListener(Event.ENTER_FRAME, onFirstFrame);
 
-        // Shutdown limpo ao fechar a janela
         #if desktop
         stage.addEventListener(Event.DEACTIVATE, onDeactivate);
         #end
     }
 
-    // ==================== First Frame ====================
+    #if desktop
+    function initPolymod():Void
+    {
+        var modRoot = "mods";
+
+        if (!FileSystem.exists(modRoot))
+            FileSystem.createDirectory(modRoot);
+
+        Polymod.init({
+            modRoot: modRoot,
+            dirs: getModDirectories(modRoot),
+            framework: FLIXEL,
+            apiVersionRule: MOD_API,
+            errorCallback: onPolymodError
+        });
+    }
+
+    function getModDirectories(root:String):Array<String>
+    {
+        var result:Array<String> = [];
+
+        for (entry in FileSystem.readDirectory(root))
+            if (FileSystem.isDirectory('$root/$entry'))
+                result.push(entry);
+
+        return result;
+    }
+
+    function onPolymodError(error:PolymodError):Void {}
+    #end
 
     function onFirstFrame(_):Void
     {
         if (FlxG.state == null) return;
 
-        // Remove o listener — só roda uma vez
         removeEventListener(Event.ENTER_FRAME, onFirstFrame);
 
         initGlobalScript();
@@ -67,30 +99,18 @@ class Main extends Sprite
         initDebugDisplay();
         #end
 
-        // Listener de update para o script global
         addEventListener(Event.ENTER_FRAME, onUpdate);
     }
-
-    // ==================== Global Script ====================
 
     function initGlobalScript():Void
     {
         globalScript = new HScript();
 
-        globalScript.onError = function(msg)
-        {
-            trace('[Main] Script error: $msg');
-        };
+        globalScript.onError = function(msg) {};
 
-        globalScript.onTrace = function(msg)
-        {
-            trace('[Script] $msg');
-        };
-
-        // Expõe o FlxG para o script global
         globalScript.set("getScreenWidth",  function() return FlxG.width);
         globalScript.set("getScreenHeight", function() return FlxG.height);
-        globalScript.set("getVersion",      function() return "0.0.2");
+        globalScript.set("getVersion",      function() return GAME_VERSION);
         globalScript.set("getBuildType",    function()
         {
             #if debug
@@ -108,20 +128,9 @@ class Main extends Sprite
             {
                 globalScript.onCreate();
                 scriptReady = true;
-                trace("[Main] global.hscript loaded successfully.");
             }
-            else
-            {
-                trace('[Main] global.hscript execute failed: ${result.error}');
-            }
-        }
-        else
-        {
-            trace('[Main] Failed to load global.hscript: ${globalScript.lastError}');
         }
     }
-
-    // ==================== Discord ====================
 
     function initDiscord():Void
     {
@@ -129,16 +138,10 @@ class Main extends Sprite
         try
         {
             discord.Discord.init();
-            trace("[Main] Discord RPC initialized.");
         }
-        catch (e:Dynamic)
-        {
-            trace('[Main] Discord RPC failed to initialize: $e');
-        }
+        catch (e:Dynamic) {}
         #end
     }
-
-    // ==================== Debug Display ====================
 
     #if debug
     function initDebugDisplay():Void
@@ -147,49 +150,32 @@ class Main extends Sprite
         {
             debugDisplay = DebugDisplay.attach();
             debugReady   = true;
-            trace("[Main] DebugDisplay attached.");
         }
     }
     #end
 
-    // ==================== Update ====================
-
     function onUpdate(_):Void
     {
-        // Tick do script global
         if (scriptReady && globalScript != null)
-        {
-            var elapsed = FlxG.elapsed;
-            globalScript.onUpdate(elapsed);
-        }
+            globalScript.onUpdate(FlxG.elapsed);
 
-        // Toggle debug com F2 (desktop + debug)
         #if (debug && desktop)
         if (FlxG.keys != null && FlxG.keys.justPressed.F2 && debugDisplay != null)
             debugDisplay.toggle();
         #end
     }
 
-    // ==================== Deactivate ====================
-
     #if desktop
     function onDeactivate(_):Void
     {
-        trace("[Main] Window deactivated — shutting down.");
-
-        // Chama onDestroy do script global
         if (scriptReady && globalScript != null)
             globalScript.onDestroy();
 
-        // Desliga Discord RPC
         try
         {
             discord.Discord.shutdown();
         }
-        catch (e:Dynamic)
-        {
-            trace('[Main] Discord shutdown error: $e');
-        }
+        catch (e:Dynamic) {}
     }
     #end
 }
