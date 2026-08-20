@@ -3,12 +3,16 @@ import lime.tools.*;
 
 class Project extends HXProject {
 
+    static inline var GAME_VERSION:String = "0.0.2";
+    static inline var GAME_ID:String      = "kareshi-project";
+    static inline var MOD_API:String      = "0.0.2";
+
     public function new() {
         super();
 
         meta.title       = "Kareshi Project";
         meta.packageName = "com.kareshiproject.game";
-        meta.version     = "0.0.2";
+        meta.version     = GAME_VERSION;
         meta.company     = "Kareshi Project Team";
 
         app.main = "Main";
@@ -17,14 +21,22 @@ class Project extends HXProject {
 
         window.width      = 1280;
         window.height     = 720;
-        window.fps        = 60;
-        window.background = 0x000000;
-        window.vsync      = true;
-        window.resizable  = false;
+        window.fps         = 60;
+        window.background  = 0x000000;
+        window.vsync       = true;
+        window.resizable   = false;
+        window.hardware    = true;
+        window.antialiasing = 0;
 
         if (platformType == PlatformType.MOBILE) {
             window.fullscreen  = true;
             window.orientation = Orientation.LANDSCAPE;
+            window.resizable   = true;
+            window.allowHighDPI = true;
+        }
+
+        if (platformType == PlatformType.DESKTOP) {
+            window.allowHighDPI = true;
         }
 
         icons.push(new Icon("arts/icon.png"));
@@ -46,20 +58,26 @@ class Project extends HXProject {
         if (platformType == PlatformType.DESKTOP)
             haxelibs.push(new Haxelib("hxdiscord_rpc"));
 
+        if (target == Platform.HTML5)
+            haxelibs.push(new Haxelib("hxcpp-debug-server"));
+
         includeAssets("assets/images", "images", ["*"]);
         includeAssets("assets/sounds", "sounds", ["*"]);
         includeAssets("assets/music",  "music",  ["*"]);
         includeAssets("assets/data",   "data",   ["*"]);
+        includeAssets("assets/fonts",  "fonts",  ["*"]);
+        includeAssets("assets/videos", "videos", ["*"]);
 
         if (platformType == PlatformType.DESKTOP)
             includeAssets("mods", "mods", ["*"]);
 
-        haxedefs.set("GAME_VERSION",              "0.0.2");
-        haxedefs.set("GAME_ID",                   "kareshi-project");
-        haxedefs.set("MOD_API",                   "0.0.2");
+        haxedefs.set("GAME_VERSION",              GAME_VERSION);
+        haxedefs.set("GAME_ID",                   GAME_ID);
+        haxedefs.set("MOD_API",                   MOD_API);
         haxedefs.set("POLYMOD_OPENFL_FIRESYSTEM", "1");
         haxedefs.set("POLYMOD_USE_LIME",          "1");
         haxedefs.set("HSCRIPT_ALLOWED_IMPORTS",   "1");
+        haxedefs.set("FLX_NO_MOUSE_ADVANCED",     "0");
 
         if (targetFlags.exists("debug")) {
             haxedefs.set("BUILD_DEBUG",              "1");
@@ -68,18 +86,31 @@ class Project extends HXProject {
             haxeflags.push("-debug");
         } else {
             haxedefs.set("BUILD_RELEASE", "1");
+            haxeflags.push("-dce full");
+            haxeflags.push("--no-traces");
+        }
+
+        if (targetFlags.exists("final")) {
+            haxedefs.set("BUILD_FINAL", "1");
         }
 
         if (platformType == PlatformType.MOBILE) {
             haxedefs.set("FLX_NO_MOUSE",    "1");
             haxedefs.set("FLX_NO_KEYBOARD", "1");
+            haxedefs.set("FLX_TOUCH",       "1");
+        }
+
+        if (target == Platform.HTML5) {
+            haxedefs.set("FLX_NO_NATIVE_CURSOR", "1");
         }
 
         haxeflags.push("-D haxe4");
+        haxeflags.push("-D analyzer-optimize");
 
         setupAndroid();
         setupIOS();
         setupDesktop();
+        setupHTML5();
     }
 
     function setupAndroid():Void {
@@ -87,11 +118,27 @@ class Project extends HXProject {
 
         platformConfig.android.minimumSDKVersion = 21;
         platformConfig.android.targetSDKVersion  = 35;
+        platformConfig.android.compileSDKVersion = 35;
 
         platformConfig.android.permissions.push("android.permission.VIBRATE");
         platformConfig.android.permissions.push("android.permission.INTERNET");
         platformConfig.android.permissions.push("android.permission.ACCESS_NETWORK_STATE");
         platformConfig.android.permissions.push("android.permission.READ_EXTERNAL_STORAGE");
+        platformConfig.android.permissions.push("android.permission.WAKE_LOCK");
+
+        if (targetFlags.exists("debug")) {
+            platformConfig.android.permissions.push("android.permission.READ_LOGS");
+        }
+
+        var keystorePath = Sys.getEnv("ANDROID_KEYSTORE_PATH");
+        if (keystorePath != null && keystorePath != "") {
+            certificate = new Keystore(
+                keystorePath,
+                Sys.getEnv("ANDROID_KEYSTORE_ALIAS"),
+                Sys.getEnv("ANDROID_KEYSTORE_PASSWORD"),
+                Sys.getEnv("ANDROID_KEYSTORE_ALIAS_PASSWORD")
+            );
+        }
     }
 
     function setupIOS():Void {
@@ -99,6 +146,7 @@ class Project extends HXProject {
 
         platformConfig.ios.deployment = 12;
         platformConfig.ios.devices    = "universal";
+        platformConfig.ios.appTransportSecurity.allowsArbitraryLoads = true;
     }
 
     function setupDesktop():Void {
@@ -107,7 +155,17 @@ class Project extends HXProject {
         if (target == Platform.WINDOWS)
             haxedefs.set("windows.icon", "arts/icon.png");
 
+        if (target == Platform.MAC)
+            icons.push(new Icon("arts/icon.icns"));
+
         if (target == Platform.LINUX)
             haxedefs.set("linux.category", "Game");
+    }
+
+    function setupHTML5():Void {
+        if (target != Platform.HTML5) return;
+
+        window.background = 0x000000;
+        haxedefs.set("web", "1");
     }
 }
