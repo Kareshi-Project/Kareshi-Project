@@ -19,8 +19,8 @@ class Project extends HXProject {
         app.file = "KareshiProject";
         app.path = "export";
 
-        window.width      = 1280;
-        window.height     = 720;
+        window.width       = 1280;
+        window.height      = 720;
         window.fps         = 60;
         window.background  = 0x000000;
         window.vsync       = true;
@@ -29,9 +29,9 @@ class Project extends HXProject {
         window.antialiasing = 0;
 
         if (platformType == PlatformType.MOBILE) {
-            window.fullscreen  = true;
-            window.orientation = Orientation.LANDSCAPE;
-            window.resizable   = true;
+            window.fullscreen   = true;
+            window.orientation  = Orientation.LANDSCAPE;
+            window.resizable    = true;
             window.allowHighDPI = true;
         }
 
@@ -74,8 +74,11 @@ class Project extends HXProject {
         haxedefs.set("GAME_VERSION",              GAME_VERSION);
         haxedefs.set("GAME_ID",                   GAME_ID);
         haxedefs.set("MOD_API",                   MOD_API);
+
         haxedefs.set("POLYMOD_OPENFL_FIRESYSTEM", "1");
         haxedefs.set("POLYMOD_USE_LIME",          "1");
+        haxedefs.set("POLYMOD_APPEND_FOLDER_INDEX_TO_ASSET_LIBRARY", "1");
+        haxedefs.set("POLYMOD_MOD_ROOT",          "mods");
         haxedefs.set("HSCRIPT_ALLOWED_IMPORTS",   "1");
         haxedefs.set("FLX_NO_MOUSE_ADVANCED",     "0");
 
@@ -98,6 +101,8 @@ class Project extends HXProject {
             haxedefs.set("FLX_NO_MOUSE",    "1");
             haxedefs.set("FLX_NO_KEYBOARD", "1");
             haxedefs.set("FLX_TOUCH",       "1");
+        } else {
+            haxedefs.set("POLYMOD_MODS_ENABLED", "1");
         }
 
         if (target == Platform.HTML5) {
