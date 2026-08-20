@@ -1,0 +1,63 @@
+{
+    "dependencies": {
+        "hxcpp": {
+            "name": "hxcpp",
+            "type": "haxelib",
+            "version": "4.3.2"
+        },
+        "lime": {
+            "name": "lime",
+            "type": "haxelib",
+            "version": "8.2.2"
+        },
+        "openfl": {
+            "name": "openfl",
+            "type": "haxelib",
+            "version": "9.5.2"
+        },
+        "flixel": {
+            "name": "flixel",
+            "type": "haxelib",
+            "version": "6.2.0"
+        },
+        "flixel-addons": {
+            "name": "flixel-addons",
+            "type": "haxelib",
+            "version": "3.2.3"
+        },
+        "flixel-ui": {
+            "name": "flixel-ui",
+            "type": "haxelib",
+            "version": "2.5.0"
+        },
+        "hscript": {
+            "name": "hscript",
+            "type": "haxelib",
+            "version": "2.5.0"
+        },
+        "polymod": {
+            "name": "polymod",
+            "type": "haxelib",
+            "version": "1.7.0"
+        },
+        "hxp": {
+            "name": "hxp",
+            "type": "haxelib",
+            "version": "1.3.1"
+        },
+        "extension-androidtools": {
+            "name": "extension-androidtools",
+            "type": "git",
+            "dir": null,
+            "ref": "main",
+            "url": "https://github.com/MAJigsaw77/extension-androidtools.git"
+        },
+        "hxdiscord_rpc": {
+            "name": "hxdiscord_rpc",
+            "type": "git",
+            "dir": null,
+            "ref": "master",
+            "url": "https://github.com/MAJigsaw77/hxdiscord_rpc.git"
+        }
+    }
+}
