@@ -43,7 +43,8 @@ class Project extends HXProject {
 
         sources.push("source");
 
-        haxelibs.push(new Haxelib("hxcpp"));
+        if (defines.get("targetType") == "cpp")
+            haxelibs.push(new Haxelib("hxcpp"));
         haxelibs.push(new Haxelib("lime"));
         haxelibs.push(new Haxelib("openfl"));
         haxelibs.push(new Haxelib("flixel"));
@@ -58,7 +59,7 @@ class Project extends HXProject {
         if (platformType == PlatformType.DESKTOP)
             haxelibs.push(new Haxelib("hxdiscord_rpc"));
 
-        if (target == Platform.HTML5)
+        if (debug && defines.get("targetType") == "cpp")
             haxelibs.push(new Haxelib("hxcpp-debug-server"));
 
         includeAssets("assets/images", "images", ["*"]);
@@ -75,14 +76,12 @@ class Project extends HXProject {
         haxedefs.set("GAME_ID",                   GAME_ID);
         haxedefs.set("MOD_API",                   MOD_API);
 
-        haxedefs.set("POLYMOD_OPENFL_FIRESYSTEM", "1");
         haxedefs.set("POLYMOD_USE_LIME",          "1");
         haxedefs.set("POLYMOD_APPEND_FOLDER_INDEX_TO_ASSET_LIBRARY", "1");
         haxedefs.set("POLYMOD_MOD_ROOT",          "mods");
         haxedefs.set("HSCRIPT_ALLOWED_IMPORTS",   "1");
-        haxedefs.set("FLX_NO_MOUSE_ADVANCED",     "0");
 
-        if (targetFlags.exists("debug")) {
+        if (debug) {
             haxedefs.set("BUILD_DEBUG",              "1");
             haxedefs.set("POLYMOD_DEBUG",            "1");
             haxedefs.set("FLX_NO_FOCUS_LOST_SCREEN", "1");
@@ -101,7 +100,7 @@ class Project extends HXProject {
             haxedefs.set("FLX_NO_MOUSE",    "1");
             haxedefs.set("FLX_NO_KEYBOARD", "1");
             haxedefs.set("FLX_TOUCH",       "1");
-        } else {
+        } else if (platformType == PlatformType.DESKTOP) {
             haxedefs.set("POLYMOD_MODS_ENABLED", "1");
         }
 
@@ -121,26 +120,25 @@ class Project extends HXProject {
     function setupAndroid():Void {
         if (target != Platform.ANDROID) return;
 
-        platformConfig.android.minimumSDKVersion = 21;
-        platformConfig.android.targetSDKVersion  = 35;
-        platformConfig.android.compileSDKVersion = 35;
+        config.set("android.minimum-sdk-version", 21);
+        config.set("android.target-sdk-version", 35);
 
-        platformConfig.android.permissions.push("android.permission.VIBRATE");
-        platformConfig.android.permissions.push("android.permission.INTERNET");
-        platformConfig.android.permissions.push("android.permission.ACCESS_NETWORK_STATE");
-        platformConfig.android.permissions.push("android.permission.READ_EXTERNAL_STORAGE");
-        platformConfig.android.permissions.push("android.permission.WAKE_LOCK");
+        config.push("android.permission", "android.permission.VIBRATE");
+        config.push("android.permission", "android.permission.INTERNET");
+        config.push("android.permission", "android.permission.ACCESS_NETWORK_STATE");
+        config.push("android.permission", "android.permission.READ_EXTERNAL_STORAGE");
+        config.push("android.permission", "android.permission.WAKE_LOCK");
 
-        if (targetFlags.exists("debug")) {
-            platformConfig.android.permissions.push("android.permission.READ_LOGS");
+        if (debug) {
+            config.push("android.permission", "android.permission.READ_LOGS");
         }
 
         var keystorePath = Sys.getEnv("ANDROID_KEYSTORE_PATH");
         if (keystorePath != null && keystorePath != "") {
-            certificate = new Keystore(
+            keystore = new Keystore(
                 keystorePath,
-                Sys.getEnv("ANDROID_KEYSTORE_ALIAS"),
                 Sys.getEnv("ANDROID_KEYSTORE_PASSWORD"),
+                Sys.getEnv("ANDROID_KEYSTORE_ALIAS"),
                 Sys.getEnv("ANDROID_KEYSTORE_ALIAS_PASSWORD")
             );
         }
@@ -149,9 +147,9 @@ class Project extends HXProject {
     function setupIOS():Void {
         if (target != Platform.IOS) return;
 
-        platformConfig.ios.deployment = 12;
-        platformConfig.ios.devices    = "universal";
-        platformConfig.ios.appTransportSecurity.allowsArbitraryLoads = true;
+        config.set("ios.deployment", 12.0);
+        config.set("ios.device", "universal");
+        // Custom App Transport Security settings require an iOS Info.plist template.
     }
 
     function setupDesktop():Void {
@@ -174,3 +172,4 @@ class Project extends HXProject {
         haxedefs.set("web", "1");
     }
 }
+
